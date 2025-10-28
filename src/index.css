@@ -1,0 +1,457 @@
+:root {
+    font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+    line-height: 1.5;
+    font-weight: 400;
+
+    color-scheme: light dark;
+    color: rgba(255, 255, 255, 0.87);
+    background-color: #242424;
+
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+a {
+    font-weight: 500;
+    color: #646cff;
+    text-decoration: inherit;
+}
+a:hover {
+    color: #535bf2;
+}
+
+body {
+    margin: 0;
+    min-width: 320px;
+    min-height: 100vh;
+}
+
+h1 {
+    font-size: 3.2em;
+    line-height: 1.1;
+}
+
+button {
+    border-radius: 8px;
+    border: 1px solid transparent;
+    padding: 0.6em 1.2em;
+    font-size: 1em;
+    font-weight: 500;
+    font-family: inherit;
+    background-color: #1a1a1a;
+    cursor: pointer;
+    transition: border-color 0.25s;
+}
+button:hover {
+    border-color: #646cff;
+}
+button:focus,
+button:focus-visible {
+    outline: 4px auto -webkit-focus-ring-color;
+}
+
+@media (prefers-color-scheme: light) {
+    :root {
+        color: #213547;
+        background-color: #ffffff;
+    }
+    a:hover {
+        color: #747bff;
+    }
+    button {
+        background-color: #f9f9f9;
+    }
+}
+
+button:focus {
+    outline: none !important;
+}
+
+label {
+    font-weight: 500;
+}
+
+.ant-typography {
+    margin: 0;
+    padding: 0;
+}
+
+#root {
+    width: 100%;
+    height: 100vh;
+    display: block;
+}
+
+/* Fix cho Dashboard hiển thị dọc */
+.ant-layout {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: wrap !important;
+}
+
+.ant-layout-content {
+    width: 100% !important;
+}
+
+.ant-layout-sider-zero-width-trigger {
+    margin-top: -50px;
+}
+
+.ant-pagination {
+    margin-top: 20px;
+    display: flex;
+    justify-content: center;
+}
+
+.ant-modal-title {
+    font-size: 20px !important;
+    font-weight: 600 !important;
+    margin-bottom: 20px !important;
+}
+
+/* Làm mượt animation của menu */
+.ant-menu-submenu-inline > .ant-menu-submenu-title .ant-menu-submenu-arrow,
+.ant-menu-submenu-vertical > .ant-menu-submenu-title .ant-menu-submenu-arrow {
+    transition: transform 0.3s cubic-bezier(0.645, 0.045, 0.355, 1);
+}
+
+.ant-menu-inline .ant-menu-submenu {
+    transition: height 0.3s ease, padding 0.3s ease, opacity 0.3s ease;
+}
+
+.ant-menu-submenu-inline .ant-menu-submenu-arrow:before,
+.ant-menu-submenu-inline .ant-menu-submenu-arrow:after {
+    transition: transform 0.3s cubic-bezier(0.645, 0.045, 0.355, 1);
+}
+
+.ant-menu-submenu-vertical > .ant-menu {
+    transition: opacity 0.3s ease, transform 0.3s ease !important;
+}
+
+.ant-menu-inline-collapsed .ant-menu-submenu-open .ant-menu-submenu-title {
+    transition: all 0.3s ease;
+}
+
+/* Thêm transition cho sub-menu */
+.ant-menu-sub.ant-menu-inline {
+    transition: all 0.3s cubic-bezier(0.215, 0.61, 0.355, 1) !important;
+}
+
+/* Khắc phục hiệu ứng giật ở bottom khi thu gọn menu */
+.ant-menu-inline-collapsed > .ant-menu-item,
+.ant-menu-inline-collapsed > .ant-menu-submenu > .ant-menu-submenu-title {
+    padding: 0 !important;
+    text-align: center;
+    transition: all 0.3s cubic-bezier(0.2, 0, 0, 1) !important;
+}
+
+/* Đảm bảo chiều cao của submenu chuyển đổi mượt mà */
+.ant-menu-submenu-inline > .ant-menu {
+    transition: height 0.3s cubic-bezier(0.2, 0, 0, 1),
+        opacity 0.3s cubic-bezier(0.2, 0, 0, 1),
+        transform 0.3s cubic-bezier(0.2, 0, 0, 1) !important;
+}
+
+/* Ngăn việc thay đổi đột ngột về padding và margin khi collapse */
+.ant-menu-inline .ant-menu-submenu-title {
+    transition: padding 0.3s cubic-bezier(0.2, 0, 0, 1),
+        margin 0.3s cubic-bezier(0.2, 0, 0, 1),
+        background 0.3s cubic-bezier(0.2, 0, 0, 1) !important;
+}
+
+/* Đảm bảo overflow được xử lý đúng cách trong quá trình collapse */
+.ant-menu-inline .ant-menu-submenu {
+    overflow: hidden;
+    transition: height 0.3s cubic-bezier(0.2, 0, 0, 1),
+        opacity 0.3s cubic-bezier(0.2, 0, 0, 1),
+        transform 0.3s cubic-bezier(0.2, 0, 0, 1) !important;
+}
+
+/* Ngăn việc bật lên của height container */
+.ant-menu-submenu-hidden {
+    opacity: 0 !important;
+    height: 0 !important;
+    overflow: hidden !important;
+    pointer-events: none !important;
+}
+
+.ant-layout-sider {
+    z-index: 1000 !important;
+}
+
+/* Ghi đè kiểu mặc định cho các ô readOnly */
+.Spreadsheet__cell--readonly {
+    opacity: 1 !important;
+    background-color: #ffffff !important;
+    color: #000000 !important;
+}
+
+/* Thêm viền cho các ô để dễ nhìn hơn */
+.Spreadsheet__cell {
+    border: 1px solid #e8e8e8;
+}
+
+/* Làm nổi bật hàng tiêu đề */
+.Spreadsheet__header-cell {
+    background-color: #f5f5f5;
+    font-weight: bold;
+}
+
+/* Override Antd disabled styles nhưng giữ cursor not-allowed */
+
+/* Input disabled */
+.ant-input[disabled] {
+    color: rgba(0, 0, 0, 0.88) !important;
+    background-color: #f9f9f9 !important;
+    border: none !important;
+    box-shadow: none !important;
+    cursor: not-allowed !important;
+    opacity: 1 !important;
+}
+
+/* Input.TextArea disabled */
+.ant-input[disabled].ant-input {
+    color: rgba(0, 0, 0, 0.88) !important;
+    background-color: #f9f9f9 !important;
+    cursor: not-allowed !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+/* InputNumber disabled */
+.ant-input-number-disabled {
+    color: rgba(0, 0, 0, 0.88) !important;
+    background-color: #f9f9f9 !important;
+    border: none !important;
+    box-shadow: none !important;
+    cursor: not-allowed !important;
+    opacity: 1 !important;
+}
+
+.ant-input-number-disabled .ant-input-number-input[disabled] {
+    color: rgba(0, 0, 0, 0.88) !important;
+    background-color: #f9f9f9 !important;
+    cursor: not-allowed !important;
+}
+
+/* Select disabled */
+.ant-select-disabled.ant-select:not(.ant-select-customize-input)
+    .ant-select-selector {
+    color: rgba(0, 0, 0, 0.88) !important;
+    background-color: #f9f9f9 !important;
+    border: none !important;
+    box-shadow: none !important;
+    cursor: not-allowed !important;
+    opacity: 1 !important;
+}
+
+.ant-select-disabled.ant-select .ant-select-selection-item {
+    color: rgba(0, 0, 0, 0.88) !important;
+}
+
+.ant-select-disabled.ant-select .ant-select-selection-placeholder {
+    color: rgba(0, 0, 0, 0.25) !important;
+}
+
+/* Ẩn mũi tên của Select khi disabled */
+.ant-select-disabled .ant-select-arrow {
+    display: none !important;
+}
+
+/* Multiple Select disabled */
+.ant-select-multiple.ant-select-disabled .ant-select-selection-item {
+    color: rgba(0, 0, 0, 0.88) !important;
+    background-color: #f5f5f5 !important;
+    border: none !important;
+}
+
+.ant-select-multiple.ant-select-disabled .ant-select-selection-item-remove {
+    display: none !important;
+}
+
+/* Cursor not-allowed cho tất cả disabled components */
+.ant-input[disabled],
+.ant-input-number-disabled,
+.ant-input-number-disabled .ant-input-number-input,
+.ant-select-disabled .ant-select-selector,
+.ant-select-disabled .ant-select-selection-search-input {
+    cursor: not-allowed !important;
+}
+
+/* Override hover effects for disabled components */
+.ant-input[disabled]:hover,
+.ant-input-number-disabled:hover,
+.ant-select-disabled:hover .ant-select-selector {
+    border: none !important;
+    box-shadow: none !important;
+    cursor: not-allowed !important;
+}
+
+/* Không cho focus vào disabled components */
+.ant-input[disabled]:focus,
+.ant-input-number-disabled:focus,
+.ant-select-disabled:focus .ant-select-selector {
+    border: none !important;
+    box-shadow: none !important;
+    cursor: not-allowed !important;
+}
+
+/* Ẩn các nút tăng giảm của InputNumber khi disabled */
+.ant-input-number-disabled .ant-input-number-handler-wrap {
+    display: none !important;
+}
+
+/* Xóa bỏ hoàn toàn border cho input-number-affix-wrapper khi disabled */
+.ant-input-number-affix-wrapper-disabled {
+    border: none !important;
+    box-shadow: none !important;
+    background-color: #f9f9f9 !important;
+}
+
+/* Đảm bảo không có border cho các trường hợp đặc biệt của Select */
+.ant-select-disabled.ant-select-focused .ant-select-selector {
+    border: none !important;
+    box-shadow: none !important;
+}
+
+/* Đảm bảo không có border cho các trường hợp đặc biệt của Input */
+.ant-input-affix-wrapper-disabled {
+    border: none !important;
+    box-shadow: none !important;
+    background-color: #f9f9f9 !important;
+}
+
+/* Xử lý trường hợp đặc biệt cho InputNumber với suffix */
+.ant-input-number-group-wrapper-disabled,
+.ant-input-number-group-wrapper-disabled .ant-input-number-group-addon,
+.ant-input-number-group-wrapper-disabled .ant-input-number-disabled {
+    border: none !important;
+    box-shadow: none !important;
+    background-color: #f9f9f9 !important;
+}
+
+/* Xử lý trường hợp đặc biệt cho các nút trong InputNumber */
+.ant-input-number-disabled .ant-input-number-handler-down-inner,
+.ant-input-number-disabled .ant-input-number-handler-up-inner {
+    display: none !important;
+}
+
+/* Xử lý trường hợp đặc biệt cho các addon của InputNumber */
+.ant-input-number-group-addon {
+    border: none !important;
+}
+
+/* Xử lý trường hợp InputNumber có border */
+.ant-input-number-wrapper-disabled,
+.ant-input-number-group-wrapper-disabled .ant-input-number-group,
+.ant-input-number-group-wrapper-disabled .ant-input-number-group-addon {
+    border: none !important;
+    background-color: #f9f9f9 !important;
+}
+
+/* Xử lý mọi trường hợp có border khi disabled */
+*[disabled],
+*.ant-input-disabled,
+*.ant-select-disabled,
+*.ant-input-number-disabled,
+*.ant-input-affix-wrapper-disabled,
+*.ant-input-number-affix-wrapper-disabled,
+*.ant-input-number-group-wrapper-disabled {
+    border: none !important;
+    box-shadow: none !important;
+}
+
+/* Xử lý DatePicker khi disabled */
+.ant-picker-disabled {
+    background: #f9f9f9 !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+.ant-picker-disabled .ant-picker-input > input[disabled] {
+    color: rgba(0, 0, 0, 0.88) !important;
+    background: #f9f9f9 !important;
+    cursor: not-allowed !important;
+}
+
+.ant-picker-disabled .ant-picker-suffix {
+    color: rgba(0, 0, 0, 0.25) !important;
+    display: none !important;
+}
+
+/* Làm đậm kí tự phía bên phải (suffix) của input khi disabled */
+.ant-input-number-group-addon,
+.ant-input-number-group-wrapper-disabled .ant-input-number-group-addon,
+.ant-input-affix-wrapper-disabled .ant-input-suffix,
+.ant-input-number-affix-wrapper-disabled .ant-input-number-suffix {
+    font-weight: 400 !important;
+    color: rgba(0, 0, 0, 0.692) !important;
+}
+
+/* Image component disabled */
+.ant-image-preview-mask {
+    background-color: rgba(0, 0, 0, 0.45) !important;
+}
+
+/* Form Item label cho disabled fields */
+.ant-form-item-label > label[class*="disabled"] {
+    color: rgba(0, 0, 0, 0.88) !important;
+}
+
+@media (min-width: 1200px) {
+    .product-list-container {
+        overflow-x: visible !important;
+    }
+    .product-row {
+        min-width: auto !important;
+    }
+}
+@media (max-width: 1199px) {
+    .product-row {
+        min-width: 1200px !important;
+    }
+}
+
+/* Tùy chỉnh thanh cuộn cho sidebar */
+.custom-sidebar-scrollbar::-webkit-scrollbar,
+.custom-sidebar-menu-scrollbar::-webkit-scrollbar {
+    width: 1px !important; /* Giảm từ 2px xuống 1px */
+}
+
+.custom-sidebar-scrollbar::-webkit-scrollbar-track,
+.custom-sidebar-menu-scrollbar::-webkit-scrollbar-track {
+    background: #001529;
+}
+
+.custom-sidebar-scrollbar::-webkit-scrollbar-thumb,
+.custom-sidebar-menu-scrollbar::-webkit-scrollbar-thumb {
+    background-color: rgba(160, 160, 160, 0.4);
+    border-radius: 10px;
+}
+
+.custom-sidebar-scrollbar::-webkit-scrollbar-thumb:hover,
+.custom-sidebar-menu-scrollbar::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(160, 160, 160, 0.6);
+}
+
+/* Firefox */
+.custom-sidebar-scrollbar,
+.custom-sidebar-menu-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(160, 160, 160, 0.4) #001529;
+}
+
+/* Ẩn thanh cuộn khi không sử dụng */
+.custom-sidebar-scrollbar,
+.custom-sidebar-menu-scrollbar {
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: thin; /* Firefox */
+}
+
+/* Hiện thanh cuộn khi hover */
+.custom-sidebar-scrollbar:hover,
+.custom-sidebar-menu-scrollbar:hover {
+    scrollbar-width: thin;
+}

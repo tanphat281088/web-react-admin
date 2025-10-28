@@ -1,0 +1,8 @@
+VITE_API_URL=http://127.0.0.1:8000/api
+
+VITE_PER_PAGE="20"
+VITE_COLUMN_SORT="id"
+VITE_DIRECTION_SORT="desc"
+
+VITE_WEBSITE_NAME="Warehouse"
+VITE_PANEL_NAME="Quản lý kho hàng"
