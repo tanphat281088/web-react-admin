@@ -6,112 +6,151 @@ import FormQuanLyBanHang from "./FormQuanLyBanHang";
 import { useDispatch } from "react-redux";
 import { clearImageSingle, setReload } from "../../redux/slices/main.slice";
 import dayjs from "dayjs";
+import { ConfigProvider } from "antd";
+
+/* ✅ Responsive hook để biết khi nào là mobile */
+import { useResponsive } from "../../hooks/useReponsive";
+/* ✅ Thanh hành động cố định đáy cho mobile */
+import MobileActionBar from "../../components/responsive/MobileActionBar";
 
 const ThemQuanLyBanHang = ({
-    path,
-    title,
+  path,
+  title,
 }: {
-    path: string;
-    title: string;
+  path: string;
+  title: string;
 }) => {
-    const dispatch = useDispatch();
+  const dispatch = useDispatch();
 
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [isLoading, setIsLoading] = useState(false);
-    const [form] = Form.useForm();
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [form] = Form.useForm();
 
-    const showModal = async () => {
-        setIsModalOpen(true);
-    };
+  /* ✅ Lấy cờ isMobile để ẩn footer Modal trên mobile (tránh trùng nút) */
+  const { isMobile } = useResponsive();
 
-    const handleCancel = () => {
-        setIsModalOpen(false);
-        form.resetFields();
-        dispatch(clearImageSingle());
-    };
+  const showModal = async () => {
+    setIsModalOpen(true);
+  };
 
-    const onCreate = async (values: any) => {
-        setIsLoading(true);
-        try {
-            // ⚠️ Không gửi ma_don_hang (BE tự sinh theo id)
-            const {
-                ma_don_hang, // eslint-disable-line @typescript-eslint/no-unused-vars
-                ...rest
-            } = values || {};
+  const handleCancel = () => {
+    setIsModalOpen(false);
+    form.resetFields();
+    dispatch(clearImageSingle());
+  };
 
-            const payload = {
-                ...rest,
-                ngay_tao_don_hang: dayjs(values.ngay_tao_don_hang).format("YYYY-MM-DD"),
-                so_tien_da_thanh_toan: values.so_tien_da_thanh_toan
-                    ? values.so_tien_da_thanh_toan
-                    : 0,
-            };
+  const onCreate = async (values: any) => {
+    setIsLoading(true);
+    try {
+      // ⚠️ Không gửi ma_don_hang (BE tự sinh theo id)
+      const {
+        ma_don_hang, // eslint-disable-line @typescript-eslint/no-unused-vars
+        ...rest
+      } = values || {};
 
-            // postData thường trả { success, data, message }
-            const closeModel = () => {
-                handleCancel();
-                dispatch(setReload());
-            };
+      const payload = {
+        ...rest,
+        ngay_tao_don_hang: dayjs(values.ngay_tao_don_hang).format("YYYY-MM-DD"),
+        so_tien_da_thanh_toan: values.so_tien_da_thanh_toan
+          ? values.so_tien_da_thanh_toan
+          : 0,
+      };
 
-            const resp: any = await postData(path, payload, closeModel);
+      // postData thường trả { success, data, message }
+      const closeModel = () => {
+        handleCancel();
+        dispatch(setReload());
+      };
 
-            // Hiển thị mã đơn hàng do BE tự sinh (nếu có)
-            const code = resp?.data?.ma_don_hang;
-            if (code) {
-                message.success(`Tạo đơn thành công: ${code}`);
-            } else {
-                message.success(`Tạo đơn thành công`);
-            }
-        } catch (_e) {
-            // postData đã có handleAxiosError; ở đây chỉ đảm bảo loading được tắt
-        } finally {
-            setIsLoading(false);
-        }
-    };
+      const resp: any = await postData(path, payload, closeModel);
 
-    return (
-        <>
-            <Button
-                onClick={showModal}
-                type="primary"
-                title={`Thêm ${title}`}
-                icon={<PlusOutlined />}
-            >
-                Thêm {title}
-            </Button>
-            <Modal
-                title={`Thêm ${title}`}
-                open={isModalOpen}
-                width={1200}
-                onCancel={handleCancel}
-                maskClosable={false}
-                centered
-                footer={[
-                    <Row justify="end" key="footer">
-                        <Button
-                            key="submit"
-                            form="formQuanLyBanHang"
-                            type="primary"
-                            htmlType="submit"
-                            size="large"
-                            loading={isLoading}
-                        >
-                            Lưu
-                        </Button>
-                    </Row>,
-                ]}
-            >
-                <Form
-                    id="formQuanLyBanHang"
-                    form={form}
-                    layout="vertical"
-                    onFinish={onCreate}
+      // Hiển thị mã đơn hàng do BE tự sinh (nếu có)
+      const code = resp?.data?.ma_don_hang;
+      if (code) {
+        message.success(`Tạo đơn thành công: ${code}`);
+      } else {
+        message.success(`Tạo đơn thành công`);
+      }
+    } catch (_e) {
+      // postData đã có handleAxiosError; ở đây chỉ đảm bảo loading được tắt
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+  <>
+    <Button
+      onClick={showModal}
+      type="primary"
+      title={`Thêm ${title}`}
+      icon={<PlusOutlined />}
+    >
+      Thêm {title}
+    </Button>
+
+    <Modal
+      title={`Thêm ${title}`}
+      open={isModalOpen}
+      /* ✅ Responsive: mobile full-width, desktop giữ 1200 như cũ */
+      width={isMobile ? "100%" : 1200}
+      /* ✅ Body cuộn mượt & padding gọn trên mobile (không ảnh hưởng desktop) */
+      styles={{
+        body: {
+          maxHeight: isMobile ? "calc(100vh - 140px)" : undefined,
+          overflow: "auto",
+          padding: isMobile ? 12 : 24,
+        },
+      }}
+      onCancel={handleCancel}
+      maskClosable={false}
+      centered
+      /* ✅ Desktop/Tablet: giữ footer cũ; Mobile: ẩn footer để dùng MobileActionBar */
+      footer={
+        isMobile
+          ? null
+          : [
+              <Row justify="end" key="footer">
+                <Button
+                  key="submit"
+                  form="formQuanLyBanHang"
+                  type="primary"
+                  htmlType="submit"
+                  size="large"
+                  loading={isLoading}
                 >
-                    <FormQuanLyBanHang form={form} />
-                </Form>
-            </Modal>
-        </>
-    );
+                  Lưu
+                </Button>
+              </Row>,
+            ]
+      }
+    >
+      {/* ✅ GÓI BẰNG ConfigProvider để Select/DatePicker vẽ dropdown TRONG modal */}
+{/* ✅ (Rollback) Render dropdown ra body như trước để không bị ăn click */}
+  {/* ====== FORM ====== */}
+  <Form
+    id="formQuanLyBanHang"
+    form={form}
+    layout="vertical"
+    onFinish={onCreate}
+  >
+    <FormQuanLyBanHang form={form} />
+  </Form>
+
+  {/* ✅ MobileActionBar chỉ cần cho modal SỬA; modal THÊM ban đầu bạn không dùng */}
+  {false && isMobile && (
+    <MobileActionBar
+      primaryLabel="Lưu"
+      onPrimary={() => form.submit()}
+      primaryLoading={isLoading}
+    />
+  )}
+
+
+    </Modal>
+  </>
+);
+
 };
 
 export default ThemQuanLyBanHang;

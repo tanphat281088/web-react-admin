@@ -7,6 +7,12 @@ import { getDataById } from "../../services/getData.api";
 import { setReload } from "../../redux/slices/main.slice";
 import { putData } from "../../services/updateData";
 import dayjs, { Dayjs } from "dayjs";
+import { ConfigProvider } from "antd";
+
+/* ✅ Responsive hook để nhận biết mobile */
+import { useResponsive } from "../../hooks/useReponsive";
+/* ✅ Thanh hành động cố định đáy cho mobile */
+import MobileActionBar from "../../components/responsive/MobileActionBar";
 
 const SuaQuanLyBanHang = ({
   path,
@@ -18,10 +24,13 @@ const SuaQuanLyBanHang = ({
   title: string;
 }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);       // loading khi fetch chi tiết
+  const [isSubmitting, setIsSubmitting] = useState(false); // loading khi submit
   const [form] = Form.useForm();
   const dispatch = useDispatch();
+
+  /* ✅ Dùng để điều chỉnh modal trên mobile */
+  const { isMobile } = useResponsive();
 
   const showModal = async () => {
     setIsModalOpen(true);
@@ -34,7 +43,6 @@ const SuaQuanLyBanHang = ({
       const val = data[key];
       if (!val) return;
 
-      // giữ đủ giờ cho các field có thể là datetime
       const looksLikeDateTime =
         /(thoi_gian|_thoi|_at|datetime)/i.test(key) ||
         key === "nguoi_nhan_thoi_gian";
@@ -44,7 +52,7 @@ const SuaQuanLyBanHang = ({
         key !== "nguoi_nhan_thoi_gian";
 
       if (looksLikeDateTime) {
-        data[key] = dayjs(val); // để nguyên giờ
+        data[key] = dayjs(val); // giữ cả giờ
       } else if (looksLikeDateOnly) {
         data[key] = dayjs(val, "YYYY-MM-DD");
       }
@@ -118,49 +126,80 @@ const SuaQuanLyBanHang = ({
     }
   };
 
-  return (
-    <>
-      <Button
-        onClick={showModal}
-        type="primary"
-        size="small"
-        title={`Sửa ${title}`}
-        icon={<EditOutlined />}
-      />
-      <Modal
-        title={`Sửa ${title}`}
-        open={isModalOpen}
-        onCancel={handleCancel}
-        maskClosable={false}
-        centered
-        width={1200}
-        footer={[
-          <Button
-            key="submit"
-            form={`formSuaQuanLyBanHang-${id}`}
-            type="primary"
-            htmlType="submit"
-            size="large"
-            loading={isSubmitting}
-          >
-            Lưu
-          </Button>,
-        ]}
-      >
-        <Form
-          id={`formSuaQuanLyBanHang-${id}`}
-          form={form}
-          layout="vertical"
-          onFinish={onUpdate}
-          onFinishFailed={(errorInfo) => {
-            console.error("Form validation failed:", errorInfo);
-          }}
-        >
-          <FormQuanLyBanHang form={form} />
-        </Form>
-      </Modal>
-    </>
-  );
+return (
+  <>
+    <Button
+      onClick={showModal}
+      type="primary"
+      size="small"
+      title={`Sửa ${title}`}
+      icon={<EditOutlined />}
+      loading={isLoading}
+    />
+    <Modal
+      title={`Sửa ${title}`}
+      open={isModalOpen}
+      onCancel={handleCancel}
+      maskClosable={false}
+      centered
+      /* ✅ Responsive: mobile full-width, desktop giữ 1200 như cũ */
+      width={isMobile ? "100%" : 1200}
+      /* ✅ Body cuộn mượt & padding gọn trên mobile */
+      styles={{
+        body: {
+          maxHeight: isMobile ? "calc(100vh - 140px)" : undefined,
+          overflow: "auto",
+          padding: isMobile ? 12 : 24,
+        },
+      }}
+      /* ✅ Desktop/Tablet: giữ footer cũ; Mobile: ẩn footer để dùng MobileActionBar */
+      footer={
+        isMobile
+          ? null
+          : [
+              <Button
+                key="submit"
+                form={`formSuaQuanLyBanHang-${id}`}
+                type="primary"
+                htmlType="submit"
+                size="large"
+                loading={isSubmitting}
+              >
+                Lưu
+              </Button>,
+            ]
+      }
+    >
+      {/* ✅ GÓI BẰNG ConfigProvider để Select/DatePicker vẽ dropdown TRONG modal */}
+{/* ✅ (Rollback) Render dropdown ra body như trước để không bị ăn click */}
+  {/* ====== FORM ====== */}
+  <Form
+    id={`formSuaQuanLyBanHang-${id}`}
+    form={form}
+    layout="vertical"
+    onFinish={onUpdate}
+    onFinishFailed={(errorInfo) => {
+      console.error("Form validation failed:", errorInfo);
+    }}
+  >
+    <FormQuanLyBanHang form={form} />
+  </Form>
+
+  {/* ✅ Thanh hành động cố định đáy — CHỈ hiển thị khi mobile */}
+  {isMobile && (
+    <MobileActionBar
+      primaryLabel="Lưu"
+      onPrimary={() => form.submit()}
+      primaryLoading={isSubmitting}
+    />
+  )}
+
+
+
+    </Modal>
+  </>
+);
+
 };
 
 export default SuaQuanLyBanHang;

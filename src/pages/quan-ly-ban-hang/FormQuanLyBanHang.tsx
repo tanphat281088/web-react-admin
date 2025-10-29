@@ -26,7 +26,10 @@ import {
   OPTIONS_LOAI_THANH_TOAN,
 } from "../../utils/constant";
 import { API_ROUTE_CONFIG } from "../../configs/api-route-config";
+
+/* ✅ FIX import: dùng default import đúng chuẩn */
 import DanhSachSanPham from "./components/DanhSachSanPham";
+
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { phoneNumberVNPattern } from "../../utils/patterns";
 
@@ -203,58 +206,76 @@ const FormQuanLyBanHang = ({
             style={{ width: "100%" }}
             format="DD/MM/YYYY"
             disabled={isDetail}
+            /* ✅ Neo popup trong modal để dễ bấm */
+            getPopupContainer={(node) => (node && node.closest(".ant-modal")) || document.body}
           />
         </Form.Item>
       </Col>
 
-      <Col span={8} xs={24} sm={24} md={24} lg={8} xl={8}>
-        <Form.Item
-          name="loai_khach_hang"
-          label="Loại khách hàng"
-          rules={[{ required: true, message: "Loại khách hàng không được bỏ trống!" }]}
-          initialValue={0}
-        >
-          <Select
-            options={OPTIONS_LOAI_KHACH_HANG}
-            placeholder="Chọn loại khách hàng"
-            disabled={isDetail}
-          />
-        </Form.Item>
-      </Col>
-
-{/* ===== TRẠNG THÁI ĐƠN HÀNG (0=Chưa giao,1=Đang giao,2=Đã giao,3=Đã hủy) ===== */}
 <Col span={8} xs={24} sm={24} md={24} lg={8} xl={8}>
   <Form.Item
-    name="trang_thai_don_hang"
-    label="Trạng thái đơn hàng"
-    rules={[]}
+    name="loai_khach_hang"
+    label="Loại khách hàng"
+    rules={[{ required: true, message: "Loại khách hàng không được bỏ trống!" }]}
     initialValue={0}
   >
     <Select
-     options={donHangTrangThaiSelect}
-
-      placeholder="Chọn trạng thái"
+      options={OPTIONS_LOAI_KHACH_HANG}
+      placeholder="Chọn loại khách hàng"
       disabled={isDetail}
+      /* ⬇️ render dropdown TRONG modal để không bị lớp khác ăn click */
+      getPopupContainer={(trigger) =>
+        (trigger && trigger.closest(".ant-modal")) || document.body
+      }
+      dropdownMatchSelectWidth={false}
+      popupClassName="phg-dd"   /* để CSS nâng z-index */
     />
   </Form.Item>
 </Col>
 
 
+      {/* ===== TRẠNG THÁI ĐƠN HÀNG (0=Chưa giao,1=Đang giao,2=Đã giao,3=Đã hủy) ===== */}
+      <Col span={8} xs={24} sm={24} md={24} lg={8} xl={8}>
+        <Form.Item
+          name="trang_thai_don_hang"
+          label="Trạng thái đơn hàng"
+          rules={[]}
+          initialValue={0}
+        >
+          <Select
+            options={donHangTrangThaiSelect}
+            placeholder="Chọn trạng thái"
+            disabled={isDetail}
+            /* ✅ Neo popup trong modal để dễ bấm */
+            getPopupContainer={(node) => (node && node.closest(".ant-modal")) || document.body}
+            dropdownMatchSelectWidth={false}
+            popupClassName="phg-dd"   // ⬅️ THÊM DÒNG NÀY
+          />
+        </Form.Item>
+      </Col>
+
       {loaiKhachHang === OPTIONS_LOAI_KHACH_HANG[0].value && (
         <Col span={8} xs={24} sm={24} md={24} lg={8} xl={8}>
           <SelectFormApi
-            name="khach_hang_id"
-            label="Khách hàng"
-            path={API_ROUTE_CONFIG.KHACH_HANG + "/options"}
-            placeholder="Chọn khách hàng"
-            rules={[
-              {
-                required: loaiKhachHang === OPTIONS_LOAI_KHACH_HANG[0].value,
-                message: "Khách hàng không được bỏ trống!",
-              },
-            ]}
-            disabled={isDetail}
-          />
+  name="khach_hang_id"
+  label="Khách hàng"
+  path={API_ROUTE_CONFIG.KHACH_HANG + "/options"}
+  placeholder="Chọn khách hàng"
+  rules={[
+    {
+      required: loaiKhachHang === OPTIONS_LOAI_KHACH_HANG[0].value,
+      message: "Khách hàng không được bỏ trống!",
+    },
+  ]}
+  disabled={isDetail}
+  /* ⬇️ render dropdown TRONG modal để không bị lớp khác ăn click */
+  getPopupContainer={(trigger) =>
+    (trigger && trigger.closest(".ant-modal")) || document.body
+  }
+  dropdownMatchSelectWidth={false}
+  popupClassName="phg-dd"
+/>
+
         </Col>
       )}
 
@@ -335,7 +356,6 @@ const FormQuanLyBanHang = ({
           /** ===== BỔ SUNG: luôn chuyển giá trị vào thành dayjs (giữ cả giờ) ===== */
           getValueProps={(value) => {
             if (!value) return { value };
-            // value có thể là string ISO/SQL hoặc dayjs — luôn ép thành dayjs
             const d =
               typeof value === "string" || typeof value === "number"
                 ? dayjs(value)
@@ -350,6 +370,8 @@ const FormQuanLyBanHang = ({
             showTime
             format={CLIENT_DATETIME_FORMAT}
             disabled={isDetail}
+            /* ✅ Neo popup trong modal để dễ bấm */
+            getPopupContainer={(node) => (node && node.closest(".ant-modal")) || document.body}
           />
         </Form.Item>
       </Col>
@@ -374,6 +396,7 @@ const FormQuanLyBanHang = ({
             formatter={formatter}
             parser={parser}
             min={0}
+            inputMode="numeric"
           />
         </Form.Item>
       </Col>
@@ -393,6 +416,7 @@ const FormQuanLyBanHang = ({
             formatter={formatter}
             parser={parser}
             min={0}
+            inputMode="numeric"
           />
         </Form.Item>
       </Col>
@@ -414,20 +438,26 @@ const FormQuanLyBanHang = ({
       </Col>
 
       {/* ======= ĐỔI VỊ TRÍ: đưa "Loại thanh toán" lên trước "Tổng tiền còn lại" ======= */}
-      <Col span={8} xs={24} sm={24} md={24} lg={8} xl={8}>
-        <Form.Item
-          name="loai_thanh_toan"
-          label="Loại thanh toán"
-          rules={[{ required: true, message: "Loại thanh toán không được bỏ trống!" }]}
-          initialValue={0}
-        >
-          <Select
-            options={OPTIONS_LOAI_THANH_TOAN}
-            placeholder="Chọn loại thanh toán"
-            disabled={isDetail}
-          />
-        </Form.Item>
-      </Col>
+<Col span={8} xs={24} sm={24} md={24} lg={8} xl={8}>
+  <Form.Item
+    name="loai_thanh_toan"
+    label="Loại thanh toán"
+    rules={[{ required: true, message: "Loại thanh toán không được bỏ trống!" }]}
+    initialValue={0}
+  >
+    <Select
+      options={OPTIONS_LOAI_THANH_TOAN}
+      placeholder="Chọn loại thanh toán"
+      disabled={isDetail}
+      /* ⬇️ render dropdown TRONG modal, tránh lớp khác ăn click */
+      getPopupContainer={(trigger) =>
+        (trigger && trigger.closest(".ant-modal")) || document.body
+      }
+      dropdownMatchSelectWidth={false}
+      popupClassName="phg-dd"   /* để set z-index “chắc” */
+    />
+  </Form.Item>
+</Col>
 
       {/* Tổng tiền thanh toán còn lại (giữ nguyên style, chỉ đổi vị trí) */}
       <Col
@@ -472,6 +502,7 @@ const FormQuanLyBanHang = ({
               formatter={formatter}
               parser={parser}
               min={0}
+              inputMode="numeric"
             />
           </Form.Item>
         </Col>

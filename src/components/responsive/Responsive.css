@@ -1,0 +1,199 @@
+/* ========= Responsive defaults (mobile-first tweaks) ========= */
+:root {
+  --header-h-mobile: 64px;
+  --content-padding-mobile: 12px;
+}
+
+/* Ant Layout base fix for mobile scrolling */
+@media (max-width: 768px) {
+  html, body {
+    height: 100%;
+  }
+
+  /* Header (HeaderMain) đang fixed; đảm bảo luôn nổi phía trên */
+  .ant-layout-header {
+    height: var(--header-h-mobile) !important;
+    line-height: var(--header-h-mobile) !important;
+    z-index: 1000 !important;
+  }
+
+  /* Vùng content: chèn khoảng trống bằng đúng chiều cao header, cuộn mượt */
+  .ant-layout-content {
+    margin-top: var(--header-h-mobile) !important;
+    padding-left: var(--content-padding-mobile) !important;
+    padding-right: var(--content-padding-mobile) !important;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Box container bên trong content (có inline padding 24px) → rút xuống 12px */
+  .ant-layout-content > div {
+    padding: var(--content-padding-mobile) !important;
+    min-height: auto !important;
+    border-radius: 10px !important;
+  }
+
+  /* Gutter chung nhỏ lại một chút để vừa mắt mobile */
+  .ant-row {
+    margin-left: -8px !important;
+    margin-right: -8px !important;
+  }
+  .ant-col {
+    padding-left: 8px !important;
+    padding-right: 8px !important;
+  }
+
+  /* Menu trong sider khi hiển thị trên mobile (trường hợp Drawer dùng theme dark) */
+  .ant-menu {
+    font-size: 15px;
+  }
+
+  /* Bất kỳ layout bị “đẩy” bởi sidebar ở mobile → đảm bảo full-width */
+  .ant-layout.has-mobile-fullwidth,
+  .ant-layout:not(.ant-layout-has-sider) {
+    margin-left: 0 !important;
+  }
+}
+
+/* Tablet tinh chỉnh nhẹ */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .ant-layout-content > div {
+    padding: 16px !important;
+  }
+}
+
+/* ===== Mobile modal & table fixes ===== */
+@media (max-width: 768px) {
+  /* Modal full width & body cuộn mượt */
+  .ant-modal {
+    max-width: 100vw !important;
+    width: 100vw !important;
+    margin: 0 !important;
+    top: var(--header-h-mobile, 64px) !important;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  .ant-modal-content {
+    border-radius: 0 !important;
+    height: calc(100vh - var(--header-h-mobile, 64px)) !important;
+    display: flex;
+    flex-direction: column;
+  }
+  .ant-modal-body {
+    overflow: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    padding: 12px !important;
+    flex: 1 1 auto;
+  }
+
+  /* Bảng lớn: cho phép cuộn ngang an toàn */
+  .ant-table-wrapper {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+  .ant-table {
+    min-width: 720px; /* tránh vỡ bố cục khi có nhiều cột */
+  }
+
+  /* Tránh overlay bắt sự kiện ngoài ý muốn */
+  .ant-drawer-mask {
+    backdrop-filter: blur(0px);
+  }
+}
+
+/* ===== Mobile modal & form-list fixes (append at end) ===== */
+@media (max-width: 768px) {
+  /* Form trong modal: ép các cột xuống hàng để tránh bể layout */
+  .ant-modal .ant-form .ant-row {
+    margin-left: -8px !important;
+    margin-right: -8px !important;
+    row-gap: 8px !important;
+  }
+  .ant-modal .ant-form .ant-col {
+    flex: 0 0 100% !important;
+    max-width: 100% !important;
+  }
+
+  /* Bảng/khối nhiều cột trong "Danh sách sản phẩm": cho phép cuộn ngang */
+  .ant-modal .ant-table-wrapper {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+  .ant-modal .ant-table {
+    min-width: 720px; /* tránh vỡ cột khi nội dung dài */
+  }
+
+  /* Input/select dài: không tràn khỏi màn hình */
+  .ant-modal .ant-select-selector,
+  .ant-modal .ant-input,
+  .ant-modal .ant-input-number {
+    max-width: 100% !important;
+  }
+}
+
+/* ===== iOS/mobile input & popup fixes ===== */
+@media (max-width: 768px) {
+  /* 1) Ngăn iOS tự zoom khi focus input (font-size < 16px) */
+  html { -webkit-text-size-adjust: 100%; }
+  input, textarea, select,
+  .ant-input, .ant-input-number-input,
+  .ant-select-selector, .ant-picker-input > input {
+    font-size: 16px !important;
+  }
+
+  /* 2) Dropdown Select/Picker hiển thị gọn trong modal, tránh “bung full” */
+  .ant-modal .ant-select-dropdown,
+  .ant-modal .ant-picker-dropdown {
+    max-height: 60vh !important;
+    overflow: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  /* 3) Khi có nhiều cột trong FormList → xuống hàng thay vì tràn ngang */
+  .ant-modal .ant-form .ant-row {
+    row-gap: 8px !important;
+  }
+  .ant-modal .ant-form .ant-col {
+    flex: 0 0 100% !important;
+    max-width: 100% !important;
+  }
+}
+
+
+/* ==== PHG: Product list form in order modal ==== */
+@media (max-width: 768px) {
+  .phg-product-list .ant-form .ant-row {
+    row-gap: 8px !important;
+    margin-left: -8px !important;
+    margin-right: -8px !important;
+  }
+  .phg-product-list .ant-form .ant-col {
+    flex: 0 0 100% !important;
+    max-width: 100% !important;
+  }
+  .phg-product-list .ant-form-item {
+    margin-bottom: 12px !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .phg-product-list .product-header {
+    display: none !important;
+  }
+}
+
+@media (min-width: 769px) {
+  /* Ẩn nhãn của từng Form.Item để không trùng với header bảng */
+  .phg-product-list .ant-form-item-label {
+    display: none !important;
+  }
+  /* Nhẹ spacing giữa các ô ở hàng sản phẩm */
+  .phg-product-list .ant-form-item {
+    margin-bottom: 8px;
+  }
+}
+/* ==== PHG: đảm bảo dropdown Select trong Modal luôn trên mọi lớp khác ==== */
+.ant-modal .phg-dd {
+  z-index: 2001 !important;           /* cao hơn modal/mask/header */
+  pointer-events: auto !important;     /* chắc chắn nhận click */
+}
+
