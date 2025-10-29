@@ -25,10 +25,20 @@ import {
   type AttendanceItem,
 } from "../../services/attendance.api";
 
-const getRespError = (resp: any) =>
-  (resp && (resp.message || resp?.data?.message || resp?.extra?.code || resp?.code)) ||
-  "Lỗi không xác định.";
-
+const getRespError = (err: any) => {
+  // Nếu đây là response dạng axios error
+  const res = err?.response;
+  if (res) {
+    return (
+      res.data?.message || res.data?.data || res.data?.error ||
+      res.data?.code || res.statusText || "Lỗi không xác định."
+    );
+  }
+  // Nếu là response tự bạn trả về { success: false, message: ... }
+  return (
+    err?.message || err?.data?.message || err?.extra?.code || err?.code || "Lỗi không xác định."
+  );
+};
 
 const { Title, Text } = Typography;
 
@@ -54,6 +64,33 @@ async function getCurrentPosition(): Promise<GeolocationPosition> {
     navigator.geolocation.getCurrentPosition(resolve, reject, GEO_OPTIONS);
   });
 }
+
+/* ----------------- tiện ích mượt UI ----------------- */
+const smoothDelay = (ms = 300) => new Promise((r) => setTimeout(r, ms));
+
+/** Thêm một dòng optimistic (hiển thị ngay) rồi sẽ đồng bộ lại bằng fetchMy */
+function optimisticPush(
+  setRows: React.Dispatch<React.SetStateAction<AttendanceItem[]>>,
+  type: AttendanceItem["type"],
+  within = true,
+  distance_m?: number
+) {
+  setRows((prev) => [
+    {
+      id: Math.floor(Math.random() * 1e9) * -1, // id tạm âm để phân biệt
+      type,
+      checked_at: new Date().toISOString(),
+      ngay: dayjs().format("YYYY-MM-DD"),
+      gio_phut: dayjs().format("HH:mm"),
+      within,
+      distance_m,
+      device_id: "WEB",
+      short_desc: "Đang đồng bộ…",
+    } as AttendanceItem,
+    ...prev,
+  ]);
+}
+/* ---------------------------------------------------- */
 
 export default function ChamCongNhanVien() {
   const { message, modal, notification } = App.useApp();
@@ -178,6 +215,10 @@ export default function ChamCongNhanVien() {
       return;
     }
     setSubmitting("in");
+
+    // ✅ Optimistic: hiện ngay 1 dòng đang đồng bộ
+    optimisticPush(setRows, "checkin", true, geo.accuracy ?? undefined);
+
     try {
       const resp = await attendanceCheckin({
         lat: geo.lat,
@@ -185,18 +226,36 @@ export default function ChamCongNhanVien() {
         accuracy_m: geo.accuracy ?? undefined,
         device_id: "WEB",
       });
-if (resp.success) {
-  message.success("Chấm công vào thành công!");
-  await fetchMy();
-} else {
-  notification.error({
-    message: "Không thể Chấm công vào",
-    description: getRespError(resp),
-  });
-}
 
-    } catch {
-      // handled
+      // Độ trễ nhỏ để UI không giật
+      await smoothDelay(300);
+
+      // success thực
+      if (resp?.success) {
+        message.success("Chấm công vào thành công!");
+        await fetchMy();
+        return;
+      }
+
+      // service trả success=false mà không throw
+      message.warning(getRespError(resp));
+      await fetchMy(); // đồng bộ lại, xoá optimistic
+    } catch (err: any) {
+      const status = err?.response?.status;
+      const code = err?.response?.data?.code;
+      const msg  = getRespError(err);
+
+      // ✅ Idempotent UX: đã check-in → coi như THÀNH CÔNG
+      if (status === 409 && code === "ALREADY_CHECKED_IN") {
+        message.success("Bạn đã chấm công vào hôm nay.");
+        await fetchMy();
+      } else if (status === 401) {
+        notification.error({ message: "Phiên đăng nhập hết hạn", description: "Vui lòng đăng nhập lại." });
+        await fetchMy();
+      } else {
+        notification.error({ message: "Không thể Chấm công vào", description: msg });
+        await fetchMy();
+      }
     } finally {
       setSubmitting(null);
     }
@@ -208,6 +267,10 @@ if (resp.success) {
       return;
     }
     setSubmitting("out");
+
+    // ✅ Optimistic
+    optimisticPush(setRows, "checkout", true, geo.accuracy ?? undefined);
+
     try {
       const resp = await attendanceCheckout({
         lat: geo.lat,
@@ -215,18 +278,32 @@ if (resp.success) {
         accuracy_m: geo.accuracy ?? undefined,
         device_id: "WEB",
       });
-if (resp.success) {
-  message.success("Chấm công ra thành công!");
-  await fetchMy();
-} else {
-  notification.error({
-    message: "Không thể Chấm công ra",
-    description: getRespError(resp),
-  });
-}
 
-    } catch {
-      // handled
+      await smoothDelay(300);
+
+      if (resp?.success) {
+        message.success("Chấm công ra thành công!");
+        await fetchMy();
+        return;
+      }
+
+      message.warning(getRespError(resp));
+      await fetchMy();
+    } catch (err: any) {
+      const status = err?.response?.status;
+      const msg    = getRespError(err);
+
+      if (status === 409) {
+        // BE có thể trả các code khác nhau: đã checkout, chưa checkin...
+        message.warning(msg || "Không thể Chấm công ra do xung đột.");
+        await fetchMy();
+      } else if (status === 401) {
+        notification.error({ message: "Phiên đăng nhập hết hạn", description: "Vui lòng đăng nhập lại." });
+        await fetchMy();
+      } else {
+        notification.error({ message: "Không thể Chấm công ra", description: msg });
+        await fetchMy();
+      }
     } finally {
       setSubmitting(null);
     }
@@ -298,7 +375,7 @@ if (resp.success) {
                   loading={submitting === "in"}
                   onClick={onCheckIn}
                 >
-                  Chấm công vào
+                  {todayHas.ins ? "Đã chấm công vào" : "Chấm công vào"}
                 </Button>
                 <Button
                   danger
@@ -306,7 +383,7 @@ if (resp.success) {
                   loading={submitting === "out"}
                   onClick={onCheckOut}
                 >
-                  Chấm công ra
+                  {todayHas.outs ? "Đã chấm công ra" : "Chấm công ra"}
                 </Button>
               </Space>
               <Alert

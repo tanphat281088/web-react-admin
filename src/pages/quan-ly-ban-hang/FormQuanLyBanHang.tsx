@@ -212,27 +212,26 @@ const FormQuanLyBanHang = ({
         </Form.Item>
       </Col>
 
-<Col span={8} xs={24} sm={24} md={24} lg={8} xl={8}>
-  <Form.Item
-    name="loai_khach_hang"
-    label="Loại khách hàng"
-    rules={[{ required: true, message: "Loại khách hàng không được bỏ trống!" }]}
-    initialValue={0}
-  >
-    <Select
-      options={OPTIONS_LOAI_KHACH_HANG}
-      placeholder="Chọn loại khách hàng"
-      disabled={isDetail}
-      /* ⬇️ render dropdown TRONG modal để không bị lớp khác ăn click */
-      getPopupContainer={(trigger) =>
-        (trigger && trigger.closest(".ant-modal")) || document.body
-      }
-      dropdownMatchSelectWidth={false}
-      popupClassName="phg-dd"   /* để CSS nâng z-index */
-    />
-  </Form.Item>
-</Col>
-
+      <Col span={8} xs={24} sm={24} md={24} lg={8} xl={8}>
+        <Form.Item
+          name="loai_khach_hang"
+          label="Loại khách hàng"
+          rules={[{ required: true, message: "Loại khách hàng không được bỏ trống!" }]}
+          initialValue={0}
+        >
+          <Select
+            options={OPTIONS_LOAI_KHACH_HANG}
+            placeholder="Chọn loại khách hàng"
+            disabled={isDetail}
+            /* ⬇️ render dropdown TRONG modal để không bị lớp khác ăn click */
+            getPopupContainer={(trigger) =>
+              (trigger && trigger.closest(".ant-modal")) || document.body
+            }
+            dropdownMatchSelectWidth={false}
+            popupClassName="phg-dd"
+          />
+        </Form.Item>
+      </Col>
 
       {/* ===== TRẠNG THÁI ĐƠN HÀNG (0=Chưa giao,1=Đang giao,2=Đã giao,3=Đã hủy) ===== */}
       <Col span={8} xs={24} sm={24} md={24} lg={8} xl={8}>
@@ -249,33 +248,37 @@ const FormQuanLyBanHang = ({
             /* ✅ Neo popup trong modal để dễ bấm */
             getPopupContainer={(node) => (node && node.closest(".ant-modal")) || document.body}
             dropdownMatchSelectWidth={false}
-            popupClassName="phg-dd"   // ⬅️ THÊM DÒNG NÀY
+            popupClassName="phg-dd"
           />
         </Form.Item>
       </Col>
 
       {loaiKhachHang === OPTIONS_LOAI_KHACH_HANG[0].value && (
         <Col span={8} xs={24} sm={24} md={24} lg={8} xl={8}>
+          {/* ✅ Ô KHÁCH HÀNG HỆ THỐNG (ID) — ĐÃ BỔ SUNG */}
           <SelectFormApi
-  name="khach_hang_id"
-  label="Khách hàng"
-  path={API_ROUTE_CONFIG.KHACH_HANG + "/options"}
-  placeholder="Chọn khách hàng"
-  rules={[
-    {
-      required: loaiKhachHang === OPTIONS_LOAI_KHACH_HANG[0].value,
-      message: "Khách hàng không được bỏ trống!",
-    },
-  ]}
-  disabled={isDetail}
-  /* ⬇️ render dropdown TRONG modal để không bị lớp khác ăn click */
-  getPopupContainer={(trigger) =>
-    (trigger && trigger.closest(".ant-modal")) || document.body
-  }
-  dropdownMatchSelectWidth={false}
-  popupClassName="phg-dd"
-/>
-
+            name="khach_hang_id"
+            label="Khách hàng"
+            rules={[{ required: true, message: "Vui lòng chọn khách hàng" }]}
+            path={API_ROUTE_CONFIG.KHACH_HANG + "/options"}
+            placeholder="Chọn khách hàng"
+            disabled={isDetail}
+            getPopupContainer={(node) => (node && node.closest(".ant-modal")) || document.body}
+            dropdownMatchSelectWidth={false}
+            popupClassName="phg-select-mobile phg-dd"
+            onChange={(id, opt) => {
+              // (tuỳ chọn) auto-fill nếu option trả kèm thông tin
+              const o: any = opt;
+              const phone = o?.so_dien_thoai || o?.phone;
+              const addr  = o?.dia_chi || o?.address;
+              const name  = o?.ten_khach_hang || o?.name;
+              form.setFieldsValue({
+                nguoi_nhan_sdt: phone ?? form.getFieldValue("nguoi_nhan_sdt"),
+                dia_chi_giao_hang: addr ?? form.getFieldValue("dia_chi_giao_hang"),
+                ten_khach_hang: name ?? form.getFieldValue("ten_khach_hang"),
+              });
+            }}
+          />
         </Col>
       )}
 
@@ -438,26 +441,26 @@ const FormQuanLyBanHang = ({
       </Col>
 
       {/* ======= ĐỔI VỊ TRÍ: đưa "Loại thanh toán" lên trước "Tổng tiền còn lại" ======= */}
-<Col span={8} xs={24} sm={24} md={24} lg={8} xl={8}>
-  <Form.Item
-    name="loai_thanh_toan"
-    label="Loại thanh toán"
-    rules={[{ required: true, message: "Loại thanh toán không được bỏ trống!" }]}
-    initialValue={0}
-  >
-    <Select
-      options={OPTIONS_LOAI_THANH_TOAN}
-      placeholder="Chọn loại thanh toán"
-      disabled={isDetail}
-      /* ⬇️ render dropdown TRONG modal, tránh lớp khác ăn click */
-      getPopupContainer={(trigger) =>
-        (trigger && trigger.closest(".ant-modal")) || document.body
-      }
-      dropdownMatchSelectWidth={false}
-      popupClassName="phg-dd"   /* để set z-index “chắc” */
-    />
-  </Form.Item>
-</Col>
+      <Col span={8} xs={24} sm={24} md={24} lg={8} xl={8}>
+        <Form.Item
+          name="loai_thanh_toan"
+          label="Loại thanh toán"
+          rules={[{ required: true, message: "Loại thanh toán không được bỏ trống!" }]}
+          initialValue={0}
+        >
+          <Select
+            options={OPTIONS_LOAI_THANH_TOAN}
+            placeholder="Chọn loại thanh toán"
+            disabled={isDetail}
+            /* ⬇️ render dropdown TRONG modal, tránh lớp khác ăn click */
+            getPopupContainer={(trigger) =>
+              (trigger && trigger.closest(".ant-modal")) || document.body
+            }
+            dropdownMatchSelectWidth={false}
+            popupClassName="phg-dd"
+          />
+        </Form.Item>
+      </Col>
 
       {/* Tổng tiền thanh toán còn lại (giữ nguyên style, chỉ đổi vị trí) */}
       <Col

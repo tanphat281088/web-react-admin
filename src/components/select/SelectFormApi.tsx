@@ -14,6 +14,11 @@ interface SelectFormApiProps
   path: string;
   filter?: any;
   reload?: boolean | any;
+
+  /** ⬇️ Tuỳ chọn: chỉ đặt true khi bạn MUỐN tự controlled thủ công
+   * Mặc định = false để để Form.Item điều khiển giá trị.
+   */
+  forceControlledValue?: boolean;
 }
 
 const DEBOUNCE_MS = 350;
@@ -32,64 +37,61 @@ const SelectFormApi = ({
   size = "middle",
   disabled,
   reload,
-  value,
+  value, // ⚠️ VẪN nhận prop này để giữ API cũ (nhưng KHÔNG forward khi không cần)
+  forceControlledValue = false,
+  getPopupContainer,
+  dropdownMatchSelectWidth,
+  popupClassName,
   ...restProps
 }: SelectFormApiProps) => {
-  const [options, setOptions] = useState<{ value: string; label: string }[]>(
+  const [options, setOptions] = useState<{ value: string | number; label: string }[]>(
     []
   );
   const [loading, setLoading] = useState(false);
-  const keywordRef = useRef<string>(""); // lưu keyword hiện tại
+  const keywordRef = useRef<string>("");
   const tRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-const fetchOptions = async (kw: string) => {
-  if (!path || path.trim() === "") {
-    setOptions([]);
-    return;
-  }
-  setLoading(true);
-  try {
-    const query = (kw || "").trim();
+  const fetchOptions = async (kw: string) => {
+    if (!path || path.trim() === "") {
+      setOptions([]);
+      return;
+    }
+    setLoading(true);
+    try {
+      const query = (kw || "").trim();
 
-    const data = await getDataSelect(path, {
-      ...(filter || {}),
-      // gửi đa khóa để BE kiểu nào cũng nhận được search
-      keyword: query,
-      q: query,
-      search: query,
-      term: query,
-      limit: PAGE_SIZE,
-    });
+      const data = await getDataSelect(path, {
+        ...(filter || {}),
+        keyword: query,
+        q: query,
+        search: query,
+        term: query,
+        limit: PAGE_SIZE,
+      });
 
-    const list = Array.isArray(data)
-      ? data.map((item: any) => {
-          // dựng nhãn linh hoạt hơn cho khách hàng
-          const fallbackLabel =
-            item.label ??
-            item.name ??
-            [item.ma_khach_hang, item.ten_khach_hang, item.so_dien_thoai]
-              .filter(Boolean)
-              .join(" - ");
+      const list = Array.isArray(data)
+        ? data.map((item: any) => {
+            const fallbackLabel =
+              item.label ??
+              item.name ??
+              [item.ma_khach_hang, item.ten_khach_hang, item.so_dien_thoai]
+                .filter(Boolean)
+                .join(" - ");
+            // ✅ Đảm bảo value là primitive id thống nhất (number hoặc string)
+            const val = item.id ?? item.value;
+            return { ...item, value: typeof val === "number" ? val : String(val), label: fallbackLabel };
+          })
+        : [];
 
-          return {
-            ...item,
-            value: item.id ?? item.value,
-            label: fallbackLabel,
-          };
-        })
-      : [];
+      setOptions(list);
+    } catch (e) {
+      console.error("Error fetching options:", e);
+      setOptions([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    setOptions(list);
-  } catch (e) {
-    console.error("Error fetching options:", e);
-    setOptions([]);
-  } finally {
-    setLoading(false);
-  }
-};
-
-
-  // Reload từ ngoài (filter/path/reload đổi) => gọi lại với keyword đang có
   useEffect(() => {
     fetchOptions(keywordRef.current);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -102,37 +104,47 @@ const fetchOptions = async (kw: string) => {
   };
 
   const handleDropdownVisible = (open: boolean) => {
-    if (open) {
-      // load gợi ý ban đầu
-      handleSearch(keywordRef.current || "");
-    }
+    if (open) handleSearch(keywordRef.current || "");
   };
 
+  // ✅ Để Form.Item điều khiển giá trị: KHÔNG forward `value` trừ khi bắt buộc
+  // ✅ `onChange` vẫn chuyển tiếp để bạn hook logic phụ (Form vẫn nhận event mặc định)
+  const selectProps: SelectProps = {
+    options,
+    placeholder,
+    mode,
+    showSearch: true,
+    allowClear: true,
+    size,
+    disabled,
+    loading,
+    onSearch: handleSearch,
+    filterOption: false,
+    optionFilterProp: "label",
+    onDropdownVisibleChange: handleDropdownVisible,
+    notFoundContent: loading ? "Đang tìm..." : "Không có dữ liệu",
+    // Neo dropdown vào modal nếu không truyền từ ngoài
+    getPopupContainer:
+      getPopupContainer ||
+      ((node) => (node && node.closest(".ant-modal")) || document.body),
+    // Giữ UI linh hoạt trong modal
+    dropdownMatchSelectWidth: dropdownMatchSelectWidth ?? false,
+    popupClassName: popupClassName ?? "phg-dd",
+    ...restProps,
+  };
+
+  if (onChange) {
+    selectProps.onChange = (v, opt) => onChange(v, opt);
+  }
+  if (forceControlledValue) {
+    // Chỉ trong TH đặc biệt: bạn MUỐN tự controlled `value`
+    selectProps.value = value;
+  }
+  // 🚫 Mặc định KHÔNG set selectProps.value để tránh “controlled hai nơi”
+
   return (
-    <Form.Item
-      name={name}
-      label={label}
-      rules={rules}
-      initialValue={initialValue}
-    >
-      <Select
-        options={options}
-        placeholder={placeholder}
-        mode={mode}
-        onChange={onChange}
-        showSearch
-        allowClear
-        size={size}
-        disabled={disabled}
-        value={value}
-        loading={loading}
-        onSearch={handleSearch}            // remote search
-        filterOption={false}               // không lọc cục bộ
-        optionFilterProp="label"           // highlight theo label
-        onDropdownVisibleChange={handleDropdownVisible}
-        notFoundContent={loading ? "Đang tìm..." : "Không có dữ liệu"}
-        {...restProps}
-      />
+    <Form.Item name={name} label={label} rules={rules} initialValue={initialValue}>
+      <Select {...selectProps} />
     </Form.Item>
   );
 };

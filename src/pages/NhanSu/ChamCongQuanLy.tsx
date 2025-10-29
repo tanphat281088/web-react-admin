@@ -20,10 +20,57 @@ import { attendanceGetAdmin, type AttendanceItem, type AttendanceListResponse } 
 import axios from "../../configs/axios"; // dùng để load danh sách user nhanh (tái sử dụng axios đã có)
 import { API_ROUTE_CONFIG } from "../../configs/api-route-config";
 
+// --- tiện ích debounce dùng cho onSearch của Select ---
+function debounce<T extends (...args: any[]) => void>(fn: T, ms = 400) {
+  let t: ReturnType<typeof setTimeout> | null = null;
+  return (...args: Parameters<T>) => {
+    if (t) clearTimeout(t);
+    t = setTimeout(() => fn(...args), ms);
+  };
+}
+
+// --- hàm gọi API /nguoi-dung cho ô tìm kiếm (dùng axios & API_ROUTE_CONFIG sẵn có) ---
+const fetchUserOptions = async (kw: string) => {
+  try {
+    // ✅ Đổi sang axios instance để tự gắn Authorization qua interceptor
+    const resp: any = await axios.get(API_ROUTE_CONFIG.NGUOI_DUNG, {
+      params: { page: 1, per_page: 50, q: kw || "" }, // ✅ dùng per_page (không dùng limit)
+      headers: { Accept: "application/json" },
+    });
+
+    // axios interceptor đã "flatten": resp là payload (có thể là {success, data:{collection:[]}} hoặc biến thể)
+    const payload =
+      resp?.data?.collection ??
+      resp?.collection ??
+      resp?.data?.items ??
+      resp?.items ??
+      resp?.data ??
+      resp ??
+      [];
+
+    const list = Array.isArray(payload) ? payload : (payload?.collection ?? []);
+    const mapped = (list || []).map((u: any) => ({
+      value: Number(u.id),
+      label: u.ho_ten || u.name || u.email || `#${u.id}`,
+    })) as { value: number; label: string }[];
+
+    console.log("[users] count:", mapped.length, "q=", kw);
+    return mapped;
+  } catch (err) {
+    console.error("fetchUserOptions fatal:", err);
+    return [];
+  }
+};
+
 const { Title, Text } = Typography;
 const { RangePicker } = DatePicker;
 
 type UserOption = { label: string; value: number };
+
+// THÊM SAU DÒNG: type UserOption = { label: string; value: number };
+const ALL_OPTION: UserOption = { value: -1, label: "— Tất cả —" };
+
+
 
 export default function ChamCongQuanLy() {
   const { message } = App.useApp();
@@ -130,18 +177,19 @@ export default function ChamCongQuanLy() {
   const fetchUsers = async () => {
     setLoadingUsers(true);
     try {
-      // tái dùng API user list có sẵn: /nguoi-dung (nếu cần có thể thay bằng endpoint options riêng)
-      const resp = await axios.get(API_ROUTE_CONFIG.NGUOI_DUNG, {
-        params: { page: 1, per_page: 200, q: "" },
-      });
-      const items = resp?.data?.data?.items || resp?.data?.items || [];
-      const opts: UserOption[] = items.map((u: any) => ({
-        value: u.id,
-        label: u.ho_ten || u.name || u.email || `#${u.id}`,
-      }));
-      setUsers(opts);
-    } catch {
-      // ignore
+      const opts = await fetchUserOptions(""); // 👈 giữ nguyên helper, nay đã dùng axios ở bên trong
+setUsers([ALL_OPTION, ...opts]); // prepend “Tất cả”
+if (!opts.length) {
+  message.warning("Không tìm thấy nhân viên (data.collection rỗng hoặc 401).");
+}
+
+    } catch (err: any) {
+      const code = err?.response?.status;
+      const msg =
+        err?.response?.data?.message ||
+        err?.message ||
+        (code === 401 ? "Hết phiên đăng nhập" : "Tải danh sách nhân viên thất bại");
+      message.error(msg);
     } finally {
       setLoadingUsers(false);
     }
@@ -173,13 +221,40 @@ export default function ChamCongQuanLy() {
                 loading={loadingUsers}
                 placeholder="-- Tất cả --"
                 options={users}
-                value={userId}
-                onChange={(v) => {
-                  setPage(1);
-                  setUserId(v);
-                }}
+value={userId ?? -1}  // hiển thị “Tất cả” khi userId chưa chọn
+onChange={(v) => {
+  setPage(1);
+  setUserId(v === -1 ? undefined : v); // chọn “Tất cả” => bỏ user_id
+}}
+
                 showSearch
+                filterOption={false}                 // 👈 tắt lọc client, dùng remote search
                 optionFilterProp="label"
+                getPopupContainer={(el) => (el && el.closest(".ant-card")) || document.body}
+                dropdownMatchSelectWidth={false}
+                notFoundContent={loadingUsers ? "Đang tải..." : "No data"}
+                onDropdownVisibleChange={async (open) => {
+                  if (open && !loadingUsers) {       // 👈 luôn nạp khi mở (khỏi lệ thuộc render trước đó)
+                    setLoadingUsers(true);
+                    try {
+const opts = await fetchUserOptions("");
+setUsers([ALL_OPTION, ...opts]);
+
+                    } finally {
+                      setLoadingUsers(false);
+                    }
+                  }
+                }}
+                onSearch={debounce(async (kw: string) => {
+                  setLoadingUsers(true);
+                  try {
+const opts = await fetchUserOptions(kw);
+setUsers([ALL_OPTION, ...opts]);
+
+                  } finally {
+                    setLoadingUsers(false);
+                  }
+                }, 400)}
               />
             </Space>
           </Col>
@@ -200,8 +275,10 @@ export default function ChamCongQuanLy() {
           </Col>
           <Col xs={24} md={6} lg={10}>
             <Space style={{ marginTop: 22 }}>
-              <Button onClick={() => setPage(1)}>Làm mới</Button>
-              <Button type="primary" onClick={fetchData} loading={loading}>
+              <Button onClick={() => setPage(1)} disabled={loading}>
+                Làm mới
+              </Button>
+              <Button type="primary" onClick={fetchData} loading={loading} disabled={loading}>
                 Tải dữ liệu
               </Button>
             </Space>

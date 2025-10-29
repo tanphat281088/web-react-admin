@@ -11,121 +11,178 @@ let isRedirecting = false;
 let navigateRef: NavigateFunction | null = null;
 
 export const setNavigate = (navigate: NavigateFunction) => {
-    navigateRef = navigate;
+  navigateRef = navigate;
 };
 
 const processQueue = (error: any) => {
-    failedQueue.forEach((prom) => {
-        if (error) {
-            prom.reject(error);
-        } else {
-            prom.resolve();
-        }
-    });
-
-    failedQueue = [];
+  failedQueue.forEach((prom) => {
+    if (error) {
+      prom.reject(error);
+    } else {
+      prom.resolve();
+    }
+  });
+  failedQueue = [];
 };
 
-// Thêm token vào mọi request
+// ======================== REQUEST INTERCEPTOR ========================
 axios.interceptors.request.use(
-    (config) => {
-        const token = localStorage.getItem("token");
-        const refreshToken = localStorage.getItem("refresh_token");
-        const deviceId = localStorage.getItem("device_id");
+  (config) => {
+    const token = localStorage.getItem("token"); // giữ nguyên key đang dùng
+    const refreshToken = localStorage.getItem("refresh_token");
+    const deviceId = localStorage.getItem("device_id");
 
-        if (token) {
-            config.headers["Authorization"] = `Bearer ${token}`;
-        }
-
-        if (refreshToken) {
-            config.headers["Refresh-Token"] = refreshToken;
-        }
-
-        if (deviceId) {
-            config.headers["Device-Id"] = deviceId;
-        }
-
-        return config;
-    },
-    (error) => {
-        return Promise.reject(error);
+    if (token) {
+      (config.headers as any)["Authorization"] = `Bearer ${token}`;
     }
+    if (refreshToken) {
+      (config.headers as any)["Refresh-Token"] = refreshToken;
+    }
+    if (deviceId) {
+      (config.headers as any)["Device-Id"] = deviceId;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
 );
 
+// ======================== RESPONSE INTERCEPTOR ========================
 axios.interceptors.response.use(
-    (response) => {
-        return response.data ? response.data : response;
-    },
-    async (error) => {
-        const originalRequest = error.config;
+  // Giữ nguyên “flatten response”
+  (response) => {
+    return (response as any).data ? (response as any).data : response;
+  },
+  async (error) => {
+    const resp = error?.response;
+    const status: number | undefined = resp?.status;
+    const data = resp?.data;
+    const originalRequest = error.config || {};
 
-        if (
-            error.response.status === 401 &&
-            error.response.data.error_code === "TOKEN_EXPIRED"
-            // && !originalRequest._retry
-        ) {
-            if (isRefreshing) {
-                return new Promise((resolve, reject) => {
-                    failedQueue.push({ resolve, reject });
-                })
-                    .then(() => {
-                        return axios(originalRequest);
-                    })
-                    .catch((err) => {
-                        return Promise.reject(err);
-                    });
-            }
+    // Nếu không có response (network error, CORS, v.v) => trả về luôn
+    if (!resp) return Promise.reject(error);
 
-            // originalRequest._retry = true;
-            isRefreshing = true;
+    // [FIX] Tránh vòng lặp refresh cho chính endpoint /auth/refresh
+    const isRefreshUrl =
+      typeof originalRequest?.url === "string" &&
+      originalRequest.url.includes("/auth/refresh");
 
-            try {
-                // Gọi API để làm mới token
-                const response = await axios.get("/auth/refresh");
+    // [FIX] Chuẩn hoá điều kiện kích hoạt REFRESH:
+    // - 401
+    // - Không phải request /auth/refresh
+    // - Chưa retry request này
+    if (status === 401 && !isRefreshUrl && !originalRequest.__isRetry) {
+      // Nếu đang refresh → xếp hàng đợi, chờ refresh xong rồi retry
+      if (isRefreshing) {
+        return new Promise((resolve, reject) => {
+          failedQueue.push({ resolve, reject });
+        })
+          .then(() => axios(originalRequest))
+          .catch((err) => Promise.reject(err));
+      }
 
-                // Lưu token mới vào localStorage
-                if (response && response.data && (response as any).success) {
-                    localStorage.setItem("token", response.data.access_token);
-                    if (response.data.refresh_token) {
-                        localStorage.setItem(
-                            "refresh_token",
-                            response.data.refresh_token
-                        );
-                    }
-                }
+      isRefreshing = true;
 
-                processQueue(null);
-                return axios(originalRequest);
-            } catch (refreshError) {
-                processQueue(refreshError);
-                return Promise.reject(refreshError);
-            } finally {
-                isRefreshing = false;
-            }
+      try {
+        // [FIX] Gọi REFRESH đúng chuẩn BE:
+        //  - Dùng POST /auth/refresh
+        //  - Gửi Refresh-Token (và Device-Id nếu có)
+        const rt = localStorage.getItem("refresh_token") || "";
+        const did = localStorage.getItem("device_id") || "";
+
+        // Vì interceptor success đã "flatten", kết quả ở đây là payload trực tiếp
+        const refreshRes: any = await axios.post(
+          "/auth/refresh",
+          null,
+          {
+            headers: {
+              "Accept": "application/json",
+              // [FIX] refresh dựa vào refresh token – KHÔNG dùng Bearer cũ
+              "Refresh-Token": rt,
+              ...(did ? { "Device-Id": did } : {}),
+            },
+          }
+        );
+
+        // [FIX] Đọc trực tiếp do đã flatten: refreshRes.success, refreshRes.data?.access_token
+        const ok = !!refreshRes && (refreshRes.success === true || refreshRes.code === "OK");
+        const newAccess = refreshRes?.data?.access_token;
+        const newRefresh = refreshRes?.data?.refresh_token;
+
+        if (!ok || !newAccess) {
+          throw new Error("REFRESH_FAILED");
         }
 
-        if (
-            error.response.status === 401 &&
-            error.response.data.error_code !== "TOKEN_EXPIRED" &&
-            !isRedirecting
-        ) {
-            isRedirecting = true;
-            if (window.location.pathname !== URL_CONSTANTS.LOGIN) {
-                store.dispatch(setAuthLogout());
-                if (navigateRef) {
-                    navigateRef(URL_CONSTANTS.LOGIN);
-                } else {
-                    window.location.href = URL_CONSTANTS.LOGIN;
-                }
-                localStorage.removeItem("token");
-                localStorage.removeItem("refresh_token");
-                localStorage.removeItem("device_id");
-            }
+        // Lưu token mới (giữ nguyên key hiện có: token/refresh_token)
+        localStorage.setItem("token", String(newAccess));
+        if (newRefresh) {
+          localStorage.setItem("refresh_token", String(newRefresh));
         }
-        return Promise.reject(error);
+
+        // Dọn hàng đợi (thành công)
+        processQueue(null);
+
+        // [FIX] Gắn lại Authorization mới cho request đang retry
+        originalRequest.__isRetry = true;
+        originalRequest.headers = originalRequest.headers || {};
+        originalRequest.headers["Authorization"] = `Bearer ${newAccess}`;
+
+        // Retry request ban đầu
+        return axios(originalRequest);
+      } catch (refreshError) {
+        // Dọn hàng đợi (thất bại)
+        processQueue(refreshError);
+
+        // [FIX] Nếu refresh thất bại → đăng xuất & điều hướng Login (không fallback dữ liệu)
+        if (!isRedirecting && window.location.pathname !== URL_CONSTANTS.LOGIN) {
+          isRedirecting = true;
+          try {
+            store.dispatch(setAuthLogout());
+          } catch {
+            // noop
+          }
+          // Xoá token local
+          localStorage.removeItem("token");
+          localStorage.removeItem("refresh_token");
+          localStorage.removeItem("device_id");
+
+          if (navigateRef) {
+            navigateRef(URL_CONSTANTS.LOGIN);
+          } else {
+            window.location.href = URL_CONSTANTS.LOGIN;
+          }
+        }
+        return Promise.reject(refreshError);
+      } finally {
+        isRefreshing = false;
+      }
     }
+
+    // 401 nhưng KHÔNG thuộc case refresh (ví dụ token không hợp lệ) → logout (giữ logic cũ)
+    if (status === 401 && data?.error_code !== "TOKEN_EXPIRED" && !isRedirecting) {
+      isRedirecting = true;
+      if (window.location.pathname !== URL_CONSTANTS.LOGIN) {
+        try {
+          store.dispatch(setAuthLogout());
+        } catch {
+          // noop
+        }
+        localStorage.removeItem("token");
+        localStorage.removeItem("refresh_token");
+        localStorage.removeItem("device_id");
+
+        if (navigateRef) {
+          navigateRef(URL_CONSTANTS.LOGIN);
+        } else {
+          window.location.href = URL_CONSTANTS.LOGIN;
+        }
+      }
+    }
+
+    return Promise.reject(error);
+  }
 );
 
+// ======================== DEFAULTS ========================
 axios.defaults.baseURL = import.meta.env.VITE_API_URL;
 axios.defaults.headers.common["Content-Type"] = "application/json";
 axios.defaults.headers.common["Accept"] = "application/json";

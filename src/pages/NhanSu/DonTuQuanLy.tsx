@@ -26,6 +26,9 @@ import {
 import axios from "../../configs/axios";
 import { API_ROUTE_CONFIG } from "../../configs/api-route-config";
 
+/* ====== MỚI: dùng service chung để tải dropdown Users qua axios instance ====== */
+import { userOptions, type UserOption as UserOptionSvc } from "../../services/user.api";
+
 const { Title, Text } = Typography;
 const { RangePicker } = DatePicker;
 
@@ -46,6 +49,10 @@ const STATUS_COLORS: Record<number, string> = {
 };
 
 type UserOption = { label: string; value: number };
+
+// THÊM SAU DÒNG: type UserOption = { label: string; value: number };
+const ALL_OPTION: UserOption = { value: -1, label: "— Tất cả —" };
+
 
 // unwrap helper: nhận {success, data:{...}} hoặc trả trực tiếp
 const unwrap = <T,>(r: any): T => (r && "data" in r ? (r.data as T) : (r as T));
@@ -83,47 +90,28 @@ export default function DonTuQuanLy() {
     return { user_id: userId, from, to, type, status, page, per_page: perPage };
   }, [userId, range, type, status, page, perPage]);
 
-  // ===== Load users for filter (unwrap đa hình + fallback me) =====
+  /* ================== MỚI: Tải users bằng service userOptions ==================
+     - Không xoá flow cũ, chỉ thay phần lấy danh sách sang service để đi qua axios + token
+     - Không “fallback chỉ có tôi” để tránh che lỗi; nếu rỗng thì báo rõ cho người dùng
+  ============================================================================== */
   const fetchUsers = async () => {
     setLoadingUsers(true);
     try {
-      const [meRes, listRes] = await Promise.all([
-        axios.post("/auth/me").catch(() => null),
-        axios.get(API_ROUTE_CONFIG.NGUOI_DUNG, { params: { page: 1, per_page: 200, q: "" } }),
-      ]);
+      // Giữ call me (nếu muốn) để tương thích các luồng khác — nhưng không dùng để "fallback me"
+      await axios.post("/auth/me").catch(() => null);
 
-      const me = meRes ? unwrap<any>(meRes) : null;
-      const meId: number | undefined =
-        Number(me?.id ?? me?.user?.id ?? me?.data?.id ?? me?.data?.user?.id ?? NaN) || undefined;
-      const meName: string | undefined =
-        (me?.ho_ten || me?.name || me?.email || me?.user?.name || me?.data?.name || me?.data?.email) ?? undefined;
+      const optsSvc: UserOptionSvc[] = await userOptions({ q: "", page: 1, per_page: 50 });
+      const mapped: UserOption[] = (optsSvc || []).map((o) => ({ value: o.value, label: o.label }));
+setUsers([ALL_OPTION, ...mapped]);
 
-      const raw = unwrap<any>(listRes);
-      const rawItems: any[] =
-        raw?.data?.data?.items ??
-        raw?.data?.items ??
-        raw?.items ??
-        (Array.isArray(raw?.data) ? raw?.data : []);
+// Auto-chọn nếu chưa có userId: giữ nguyên hành vi (không bắt buộc chọn “Tất cả”)
+if (!userId && mapped.length > 0) {
+  setUserId(mapped[0].value);
+}
 
-      let mapped: UserOption[] = (rawItems || [])
-        .map((u: any) => ({
-          value: Number(u?.id),
-          label: u?.ho_ten || u?.name || u?.email || `#${u?.id}`,
-        }))
-        .filter((u) => !Number.isNaN(u.value));
 
-      if ((!mapped || mapped.length === 0) && meId) {
-        mapped = [{ value: meId, label: meName || `#${meId}` }];
-      }
-
-      setUsers(mapped);
-
-      // Auto chọn: ưu tiên meId trong list; nếu không chọn phần tử đầu
-      if (!userId) {
-        const foundMe = meId ? mapped.find((x) => x.value === meId) : undefined;
-        const first = mapped.length > 0 ? mapped[0] : undefined;
-        const defaultId = foundMe?.value ?? first?.value;
-        if (defaultId !== undefined) setUserId(defaultId);
+      if (!mapped.length) {
+        antdMessage.warning("Không có nhân viên để hiển thị. Vui lòng kiểm tra quyền hoặc dữ liệu.");
       }
     } catch (e) {
       // eslint-disable-next-line no-console
@@ -134,62 +122,62 @@ export default function DonTuQuanLy() {
     }
   };
 
-// ===== Reload list (không phụ thuộc closure) =====
-const reloadNow = async () => {
-  setLoading(true);
-  try {
-    const liveParams = {
-      user_id: userId,
-      from: range[0].format("YYYY-MM-DD"),
-      to: range[1].format("YYYY-MM-DD"),
-      type,
-      status,
-      page,
-      per_page: perPage,
-    };
+  // ===== Reload list (không phụ thuộc closure) =====
+  const reloadNow = async () => {
+    setLoading(true);
+    try {
+      const liveParams = {
+        user_id: userId,
+        from: range[0].format("YYYY-MM-DD"),
+        to: range[1].format("YYYY-MM-DD"),
+        type,
+        status,
+        page,
+        per_page: perPage,
+      };
 
-    // Gọi API
-    const raw = await donTuAdminList(liveParams);
+      // Gọi API
+      const raw = await donTuAdminList(liveParams);
 
-    // === Normalize mọi shape có thể (axiosResponse | direct) ===
-    const a: any = (raw && "data" in (raw as any)) ? (raw as any).data : raw;
+      // === Normalize mọi shape có thể (axiosResponse | direct) ===
+      const a: any = (raw && "data" in (raw as any)) ? (raw as any).data : raw;
 
-    // Lấy danh sách items theo các tên thường gặp: items -> rows -> data.items
-    const items: DonTuItem[] = (a?.items ?? a?.rows ?? a?.data?.items ?? []) as DonTuItem[];
+      // Lấy danh sách items theo các tên thường gặp: items -> rows -> data.items
+      const items: DonTuItem[] = (a?.items ?? a?.rows ?? a?.data?.items ?? []) as DonTuItem[];
 
-    // Tổng bản ghi: pagination.total -> data.pagination.total -> total -> số phần tử items
-    const totalNum: number = Number(
-      a?.pagination?.total ??
-      a?.data?.pagination?.total ??
-      a?.total ??
-      (Array.isArray(items) ? items.length : 0)
-    );
+      // Tổng bản ghi: pagination.total -> data.pagination.total -> total -> số phần tử items
+      const totalNum: number = Number(
+        a?.pagination?.total ??
+        a?.data?.pagination?.total ??
+        a?.total ??
+        (Array.isArray(items) ? items.length : 0)
+      );
 
-    // eslint-disable-next-line no-console
-    console.log("ADMIN LIST (liveParams):", liveParams, { total: totalNum, itemsPreview: items?.slice?.(0, 2) });
+      // eslint-disable-next-line no-console
+      console.log("ADMIN LIST (liveParams):", liveParams, { total: totalNum, itemsPreview: items?.slice?.(0, 2) });
 
-    setRows(items);
-    setTotal(totalNum);
-  } catch (e) {
-    // eslint-disable-next-line no-console
-    console.error("[DonTuQuanLy] reloadNow error =", e);
-    antdMessage.error("Không tải được danh sách đơn.");
-    setRows([]);
-    setTotal(0);
-  } finally {
-    setLoading(false);
-  }
-};
+      setRows(items);
+      setTotal(totalNum);
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.error("[DonTuQuanLy] reloadNow error =", e);
+      antdMessage.error("Không tải được danh sách đơn.");
+      setRows([]);
+      setTotal(0);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-useEffect(() => {
-  fetchUsers();
-}, []);
+  useEffect(() => {
+    fetchUsers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-useEffect(() => {
-  reloadNow();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-}, [userId, range, type, status, page, perPage]);
-
+  useEffect(() => {
+    reloadNow();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId, range, type, status, page, perPage]);
 
   // ===== Actions =====
   const approve = async (id: number) => {
@@ -315,14 +303,31 @@ useEffect(() => {
               loading={loadingUsers}
               style={{ width: 240 }}
               options={users}
-              value={userId}
-              onChange={(v) => {
-                setPage(1);
-                setUserId(v);
-              }}
+value={userId ?? -1}
+onChange={(v) => {
+  setPage(1);
+  setUserId(v === -1 ? undefined : v);
+}}
+
               showSearch
               optionFilterProp="label"
               placeholder="-- Tất cả --"
+              onDropdownVisibleChange={async (open) => {
+                if (open && !loadingUsers) {
+                  await fetchUsers();
+                }
+              }}
+              onSearch={async (kw) => {
+                setLoadingUsers(true);
+                try {
+const optsSvc = await userOptions({ q: kw, page: 1, per_page: 50 });
+setUsers([ALL_OPTION, ...optsSvc.map((o) => ({ value: o.value, label: o.label }))]);
+
+                } finally {
+                  setLoadingUsers(false);
+                }
+              }}
+              filterOption={false}
             />
           </div>
 

@@ -10,12 +10,14 @@ import axios from "../../configs/axios";
 import { API_ROUTE_CONFIG } from "../../configs/api-route-config";
 import { timesheetAdmin, timesheetRecompute, type BangCongItem } from "../../services/bangCong.api";
 
+/* ====== MỚI: dùng service chung để tải dropdown Users qua axios instance ====== */
+import { userOptions, type UserOption as UserOptionSvc } from "../../services/user.api";
+
 const { Title, Text } = Typography;
 
-type UserOption = { label: string; value: number; email?: string; name?: string };
+type UserOption = { label: string; value: number };
 
 export default function BangCongQuanLy() {
-
 
   const [thang, setThang] = useState<string>(dayjs().format("YYYY-MM")); // nhãn kỳ = tháng bắt đầu kỳ 6→5
   const [userId, setUserId] = useState<number | undefined>(undefined);
@@ -38,63 +40,28 @@ export default function BangCongQuanLy() {
     const init = async () => {
       setLoadingUsers(true);
       try {
-        // song song: /auth/me + /nguoi-dung
-        const [meRes, listRes] = await Promise.all([
-          axios.post("/auth/me").catch(() => null),
-          axios.get(API_ROUTE_CONFIG.NGUOI_DUNG, { params: { page: 1, per_page: 200, q: "" } }),
-        ]);
+        // Call me để giữ behavior cũ (không dùng làm fallback)
+        await axios.post("/auth/me").catch(() => null);
 
-        const mePayload: any = meRes ? unwrap<any>(meRes) : null;
-        const meId: number | undefined =
-          Number(
-            mePayload?.id ??
-              mePayload?.user?.id ??
-              mePayload?.data?.id ??
-              mePayload?.data?.user?.id ??
-              NaN
-          ) || undefined;
-
-        const meName: string | undefined =
-          (mePayload?.ho_ten ||
-            mePayload?.name ||
-            mePayload?.email ||
-            mePayload?.user?.name ||
-            mePayload?.data?.name ||
-            mePayload?.data?.email) ?? undefined;
-
-        const listRaw: any = unwrap<any>(listRes);
-        // Bắt mọi shape có thể: data.data.items | data.items | items | data (mảng)
-        const rawItems: any[] =
-          listRaw?.data?.data?.items ??
-          listRaw?.data?.items ??
-          listRaw?.items ??
-          (Array.isArray(listRaw?.data) ? listRaw?.data : []);
-
-        let mapped: UserOption[] = (rawItems || [])
-          .map((u: any) => ({
-            value: Number(u?.id),
-            label: u?.ho_ten || u?.name || u?.email || `#${u?.id}`,
-            email: u?.email,
-            name: u?.name || u?.ho_ten,
-          }))
-          .filter((u) => !Number.isNaN(u.value));
-
-        // Fallback: nếu list rỗng, đẩy "tôi" vào dropdown
-        if ((!mapped || mapped.length === 0) && meId) {
-          mapped = [{ value: meId, label: meName || `#${meId}` }];
-        }
-
+        // MỚI: Tải danh sách users qua service chung (đi qua axios + token)
+        const optsSvc: UserOptionSvc[] = await userOptions({ q: "", page: 1, per_page: 200 });
+        const mapped: UserOption[] = (optsSvc || []).map((o) => ({ value: o.value, label: o.label }));
         setUsers(mapped);
 
-        // Auto chọn: ưu tiên meId có trong list; nếu không thì chọn phần tử đầu
+        // Auto chọn: nếu chưa có userId và có danh sách
         if (!userId) {
-          const foundMe = meId ? mapped.find((x) => x.value === Number(meId)) : undefined;
           const first = mapped.length > 0 ? mapped[0] : undefined;
-          const defaultId: number | undefined = foundMe?.value ?? first?.value;
+          const defaultId: number | undefined = first?.value;
           if (defaultId !== undefined) setUserId(defaultId);
         }
+
+        if (!mapped.length) {
+          message.warning("Không có nhân viên để hiển thị. Vui lòng kiểm tra quyền hoặc dữ liệu.");
+        }
       } catch (e) {
+        // eslint-disable-next-line no-console
         console.error("[BangCongQuanLy] init error =", e);
+        message.error("Không tải được danh sách nhân viên.");
       } finally {
         setLoadingUsers(false);
       }
@@ -172,6 +139,27 @@ export default function BangCongQuanLy() {
               showSearch
               optionFilterProp="label"
               placeholder="-- Chọn nhân viên --"
+              filterOption={false}
+              onDropdownVisibleChange={async (open) => {
+                if (open && !loadingUsers) {
+                  setLoadingUsers(true);
+                  try {
+                    const optsSvc = await userOptions({ q: "", page: 1, per_page: 200 });
+                    setUsers(optsSvc.map((o) => ({ value: o.value, label: o.label })));
+                  } finally {
+                    setLoadingUsers(false);
+                  }
+                }
+              }}
+              onSearch={async (kw) => {
+                setLoadingUsers(true);
+                try {
+                  const optsSvc = await userOptions({ q: kw, page: 1, per_page: 200 });
+                  setUsers(optsSvc.map((o) => ({ value: o.value, label: o.label })));
+                } finally {
+                  setLoadingUsers(false);
+                }
+              }}
             />
           </Space>
 

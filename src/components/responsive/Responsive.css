@@ -197,3 +197,19 @@
   pointer-events: auto !important;     /* chắc chắn nhận click */
 }
 
+/* ==== PHG: Select dropdown trong Modal (mobile) – căn giữa, fit theo màn hình ==== */
+@media (max-width: 768px) {
+  .ant-modal .phg-select-mobile {
+    /* ép dropdown canh hai bên 16px, fit 100vw - 32px */
+    left: 16px !important;
+    right: 16px !important;        /* thêm right để đảm bảo không vượt modal */
+    width: calc(100vw - 32px) !important;
+    max-width: calc(100vw - 32px) !important;
+  }
+
+  /* Cho nội dung dòng dài xuống hàng */
+  .ant-modal .phg-select-mobile .ant-select-item-option-content {
+    white-space: normal !important;
+    line-height: 1.35;
+  }
+}

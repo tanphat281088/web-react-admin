@@ -88,15 +88,16 @@ const FormKhachHang = ({ form }: { form: FormInstance }) => {
         </Form.Item>
       </Col>
 
-      <Col span={24}>
-        <Form.Item
-          name="dia_chi"
-          label="Địa chỉ"
-          rules={[{ required: true, message: "Địa chỉ không được bỏ trống!" }]}
-        >
-          <Input.TextArea rows={3} placeholder="Nhập địa chỉ" />
-        </Form.Item>
-      </Col>
+<Col span={24}>
+  <Form.Item
+    name="dia_chi"
+    label="Địa chỉ"
+    rules={[]} // không required
+  >
+    <Input.TextArea rows={3} placeholder="Nhập địa chỉ (không bắt buộc)" />
+  </Form.Item>
+</Col>
+
 
       <Col span={24}>
         <Form.Item name="ghi_chu" label="Ghi chú">
