@@ -26,6 +26,9 @@ const EXTRA_WHITELIST = [
     // ✅ NEW: Quản lý dòng tiền (Cashflow)
   "/admin/quan-ly-thu-chi/cashflow",
 
+    "/admin/utilities/fb-inbox",
+
+
 
 ];
 
@@ -42,6 +45,11 @@ const MODULE_ALIAS: Record<string, string> = {
   // CSKH (mới)
   "cham-soc-khach-hang": "cskh",
   "diem-thanh-vien": "cskh-points",
+
+    // Utilities → Tư vấn Facebook
+  "utilities": "utilities",
+  "fb-inbox": "utilities-fb",
+
 };
 
 const PermissionMiddleware = ({ children }: { children: React.ReactNode }) => {

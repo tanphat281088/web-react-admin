@@ -171,6 +171,9 @@ export const URL_CONSTANTS = {
   VT_ISSUES: "/admin/quan-ly-vat-tu/issues",
   VT_STOCKS: "/admin/quan-ly-vat-tu/stocks",
 
+  UTILITIES_FB_INBOX: "/admin/utilities/fb-inbox",
+
+
   PHIEU_THU: "/admin/quan-ly-thu-chi/phieu-thu",
   BAO_CAO_THU_CHI: "/admin/quan-ly-thu-chi/bao-cao",  // 👈 thêm tại đây
 

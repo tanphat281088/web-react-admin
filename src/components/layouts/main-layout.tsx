@@ -89,11 +89,10 @@ const NO_PERMISSION_REQUIRED_PREFIXES = [
   "/admin/quan-ly-vat-tu/issues",
   "/admin/quan-ly-vat-tu/stocks",
 
-  // ✅ MỚI: Quản lý vật tư (VT)
-  "/admin/quan-ly-vat-tu/items",
-  "/admin/quan-ly-vat-tu/receipts",
-  "/admin/quan-ly-vat-tu/issues",
-  "/admin/quan-ly-vat-tu/stocks",
+
+
+    "/admin/utilities/fb-inbox",
+
 ];
 
 /** có cần bypass PermissionMiddleware không (hỗ trợ cả URL con) */

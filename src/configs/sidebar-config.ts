@@ -31,6 +31,9 @@ import {
   HeartHandshake // ✅ Icon cho Chăm sóc khách hàng
 } from "lucide-react";
 
+import { MessageCircle } from "lucide-react";
+
+
 const iconStyle = { fontSize: "18px" };
 
 export const sidebarConfig = (navigate: NavigateFunction) => {
@@ -202,6 +205,21 @@ export const sidebarConfig = (navigate: NavigateFunction) => {
         },
       ],
     },
+
+
+{
+  key: "quan-ly-tien-ich",
+  label: "Quản lý tiện ích",
+  icon: React.createElement(Settings, { style: iconStyle }),
+  children: [
+    {
+      key: "fb-inbox",
+      label: "Tư vấn Facebook",
+      icon: React.createElement(MessageCircle, { style: iconStyle }),
+      onClick: () => navigate(URL_CONSTANTS.UTILITIES_FB_INBOX),
+    },
+  ],
+},
 
 
 

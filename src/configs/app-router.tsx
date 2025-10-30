@@ -59,6 +59,7 @@ import VtIssuesPage from "../pages/vt/VtIssuesPage";
 import VtStocksLedgerPage from "../pages/vt/VtStocksLedgerPage";
 import CashflowPage from "../pages/thu-chi/CashflowPage";
 
+import FbInboxPage from "../pages/utilities/FbInboxPage";
 
 
 export const router = createBrowserRouter([
@@ -247,6 +248,14 @@ export const router = createBrowserRouter([
 { path: URL_CONSTANTS.VT_RECEIPTS, element: <MainLayout />, children: [{ index: true, element: <VtReceiptsPage /> }] },
 { path: URL_CONSTANTS.VT_ISSUES, element: <MainLayout />, children: [{ index: true, element: <VtIssuesPage /> }] },
 { path: URL_CONSTANTS.VT_STOCKS, element: <MainLayout />, children: [{ index: true, element: <VtStocksLedgerPage /> }] },
+
+// ✅ Quản lý tiện ích → Tư vấn Facebook
+{
+  path: "utilities/fb-inbox",
+  element: <MainLayout />,
+  children: [{ index: true, element: <FbInboxPage /> }],
+},
+
 
 
       {
