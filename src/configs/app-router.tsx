@@ -51,6 +51,14 @@ import BaoCaoQuanTri from "../pages/bao-cao-quan-tri";
 /** ✅✅✅ Import mới: CSKH → Điểm thành viên */
 import MemberPointList from "../pages/cskh/MemberPointList";
 
+import { URL_CONSTANTS } from "./api-route-config";
+
+import VtItemsPage from "../pages/vt/VtItemsPage";
+import VtReceiptsPage from "../pages/vt/VtReceiptsPage";
+import VtIssuesPage from "../pages/vt/VtIssuesPage";
+import VtStocksLedgerPage from "../pages/vt/VtStocksLedgerPage";
+
+
 export const router = createBrowserRouter([
   {
     path: "/",
@@ -232,6 +240,13 @@ export const router = createBrowserRouter([
           },
         ],
       },
+
+{ path: URL_CONSTANTS.VT_ITEMS, element: <MainLayout />, children: [{ index: true, element: <VtItemsPage /> }] },
+{ path: URL_CONSTANTS.VT_RECEIPTS, element: <MainLayout />, children: [{ index: true, element: <VtReceiptsPage /> }] },
+{ path: URL_CONSTANTS.VT_ISSUES, element: <MainLayout />, children: [{ index: true, element: <VtIssuesPage /> }] },
+{ path: URL_CONSTANTS.VT_STOCKS, element: <MainLayout />, children: [{ index: true, element: <VtStocksLedgerPage /> }] },
+
+
       {
         path: "quan-ly-thu-chi",
         children: [

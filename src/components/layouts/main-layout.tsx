@@ -75,11 +75,24 @@ const MainLayout = () => {
     { key: "3", label: "Tất cả thông báo" },
   ];
 
-  /** ✅ WHITELIST: các route KHÔNG yêu cầu kiểm tra quyền */
-  const NO_PERMISSION_REQUIRED = ["/admin/quan-ly-thu-chi/bao-cao"];
+/** ✅ WHITELIST: các route KHÔNG yêu cầu kiểm tra quyền (theo prefix) */
+const NO_PERMISSION_REQUIRED_PREFIXES = [
+  // Giữ whitelist cũ
+  "/admin/quan-ly-thu-chi/bao-cao",
 
-  /** có cần bypass PermissionMiddleware không */
-  const bypassPermission = NO_PERMISSION_REQUIRED.includes(location.pathname);
+  // ✅ MỚI: Quản lý vật tư (VT)
+  "/admin/quan-ly-vat-tu/items",
+  "/admin/quan-ly-vat-tu/receipts",
+  "/admin/quan-ly-vat-tu/issues",
+  "/admin/quan-ly-vat-tu/stocks",
+];
+
+/** có cần bypass PermissionMiddleware không (hỗ trợ cả URL con) */
+const isBypassed = (p: string) =>
+  NO_PERMISSION_REQUIRED_PREFIXES.some((pre) => p === pre || p.startsWith(pre + "/"));
+
+const bypassPermission = isBypassed(location.pathname);
+
 
   /** phần UI layout chung */
   const Shell = (

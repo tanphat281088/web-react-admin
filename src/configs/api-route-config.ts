@@ -34,6 +34,19 @@ export const API_ROUTE_CONFIG = {
 
   PHIEU_NHAP_KHO: "/phieu-nhap-kho",
   QUAN_LY_TON_KHO: "/quan-ly-ton-kho",
+    // ===== API Quản lý vật tư (VT) =====
+  VT_ITEMS: "/vt/items",                 // GET list / POST create
+  VT_ITEM_ID: (id: number | string) => `/vt/items/${id}`, // GET/PUT/DELETE
+
+  VT_RECEIPTS: "/vt/receipts",           // GET list / POST create
+  VT_RECEIPT_ID: (id: number | string) => `/vt/receipts/${id}`, // GET/PUT/DELETE
+
+  VT_ISSUES: "/vt/issues",               // GET list / POST create
+  VT_ISSUE_ID: (id: number | string) => `/vt/issues/${id}`,     // GET/PUT/DELETE
+
+  VT_STOCKS: "/vt/stocks",               // GET snapshot tồn
+  VT_LEDGER: "/vt/ledger",               // GET sổ kho (filter)
+
   PHIEU_CHI: "/phieu-chi",
   QUAN_LY_BAN_HANG: "/quan-ly-ban-hang",
   PHIEU_XUAT_KHO: "/phieu-xuat-kho",
@@ -139,6 +152,12 @@ export const URL_CONSTANTS = {
   PHIEU_CHI: "/admin/quan-ly-thu-chi/phieu-chi",
   QUAN_LY_BAN_HANG: "/admin/quan-ly-ban-hang",
   PHIEU_XUAT_KHO: "/admin/quan-ly-kho/phieu-xuat-kho",
+    // ===== Quản lý vật tư (VT) =====
+  VT_ITEMS: "/admin/quan-ly-vat-tu/items",
+  VT_RECEIPTS: "/admin/quan-ly-vat-tu/receipts",
+  VT_ISSUES: "/admin/quan-ly-vat-tu/issues",
+  VT_STOCKS: "/admin/quan-ly-vat-tu/stocks",
+
   PHIEU_THU: "/admin/quan-ly-thu-chi/phieu-thu",
 
   CONG_THUC_SAN_XUAT: "/admin/quan-ly-san-xuat/cong-thuc-san-xuat",

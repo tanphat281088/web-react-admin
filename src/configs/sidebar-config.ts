@@ -167,32 +167,43 @@ export const sidebarConfig = (navigate: NavigateFunction) => {
       ],
     },
 
-    // ===== Quản lý kho =====
+
+
+
+    // ===== Quản lý vật tư =====
     {
-      key: "quan-ly-kho",
-      label: "Quản lý kho",
-      icon: React.createElement(Warehouse, { style: iconStyle }),
+      key: "quan-ly-vat-tu",
+      label: "Quản lý vật tư",
+      icon: React.createElement(Package2, { style: iconStyle }),
       children: [
         {
-          key: "phieu-nhap-kho",
-          label: "Phiếu nhập kho",
-          icon: React.createElement(NotepadText, { style: iconStyle }),
-          onClick: () => navigate(URL_CONSTANTS.PHIEU_NHAP_KHO),
+          key: "vt-items",
+          label: "Danh mục VT",
+          icon: React.createElement(SquareMenu, { style: iconStyle }),
+          onClick: () => navigate(URL_CONSTANTS.VT_ITEMS),       // /admin/vt/items
         },
         {
-          key: "phieu-xuat-kho",
-          label: "Phiếu xuất kho",
+          key: "vt-receipts",
+          label: "Phiếu nhập VT",
           icon: React.createElement(NotepadText, { style: iconStyle }),
-          onClick: () => navigate(URL_CONSTANTS.PHIEU_XUAT_KHO),
+          onClick: () => navigate(URL_CONSTANTS.VT_RECEIPTS),    // /admin/vt/receipts
         },
         {
-          key: "quan-ly-ton-kho",
-          label: "Quản lý tồn kho",
-          icon: React.createElement(Package2, { style: iconStyle }),
-          onClick: () => navigate(URL_CONSTANTS.QUAN_LY_TON_KHO),
+          key: "vt-issues",
+          label: "Phiếu xuất VT",
+          icon: React.createElement(NotepadText, { style: iconStyle }),
+          onClick: () => navigate(URL_CONSTANTS.VT_ISSUES),      // /admin/vt/issues
+        },
+        {
+          key: "vt-stocks",
+          label: "Tồn & Sổ kho",
+          icon: React.createElement(BarChart3, { style: iconStyle }),
+          onClick: () => navigate(URL_CONSTANTS.VT_STOCKS),      // /admin/vt/stocks
         },
       ],
     },
+
+
 
     // ===== Quản lý thu chi =====
     {

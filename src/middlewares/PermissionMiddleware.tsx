@@ -17,6 +17,12 @@ const EXTRA_WHITELIST = [
   "/admin/bao-cao-quan-tri",
   "/admin/bao-cao-quan-tri/kqkd",
   "/admin/cham-soc-khach-hang/diem-thanh-vien",
+    // ✅ MỚI: Quản lý vật tư (VT)
+  "/admin/quan-ly-vat-tu/items",
+  "/admin/quan-ly-vat-tu/receipts",
+  "/admin/quan-ly-vat-tu/issues",
+  "/admin/quan-ly-vat-tu/stocks",
+
 ];
 
 /**

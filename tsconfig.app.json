@@ -1,26 +1,38 @@
 {
-    "compilerOptions": {
-        "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
-        "target": "ES2020",
-        "useDefineForClassFields": true,
-        "lib": ["ES2020", "DOM", "DOM.Iterable"],
-        "module": "ESNext",
-        "skipLibCheck": true,
+  "compilerOptions": {
+    // --- Build info
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
 
-        /* Bundler mode */
-        "moduleResolution": "bundler",
-        "allowImportingTsExtensions": true,
-        "verbatimModuleSyntax": true,
-        "moduleDetection": "force",
-        "noEmit": true,
-        "jsx": "react-jsx",
+    // --- Target & libs
+    "target": "ES2020",
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
 
-        /* Linting */
-        "strict": true,
-        "noUnusedLocals": false,
-        "noUnusedParameters": false,
-        "noFallthroughCasesInSwitch": true,
-        "noUncheckedSideEffectImports": true
-    },
-    "include": ["src"]
+    // --- Modules
+    "module": "ESNext",
+    "moduleResolution": "Bundler", // chuẩn TS5
+    "moduleDetection": "force",
+    "verbatimModuleSyntax": true,
+    "allowImportingTsExtensions": true,
+    "noEmit": true,
+
+    // --- JSX (QUAN TRỌNG để hết lỗi JSX.Element)
+    "jsx": "react-jsx",
+    "types": ["vite/client", "react", "react-dom"],
+
+    // --- Strictness & perf
+    "strict": true,
+    "skipLibCheck": true,
+
+    // --- Linting opts
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedSideEffectImports": true,
+
+    // --- TS proposal
+    "useDefineForClassFields": true
+  },
+
+  // Bảo đảm TS quét cả types cục bộ (nếu bạn tạo src/types/react-jsx.d.ts)
+  "include": ["src", "src/types", "vite-env.d.ts"]
 }
