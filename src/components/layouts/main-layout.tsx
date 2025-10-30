@@ -80,6 +80,15 @@ const NO_PERMISSION_REQUIRED_PREFIXES = [
   // Giữ whitelist cũ
   "/admin/quan-ly-thu-chi/bao-cao",
 
+  // ✅ MỚI: Quản lý dòng tiền (Cashflow)
+  "/admin/quan-ly-thu-chi/cashflow",
+
+  // ✅ MỚI: Quản lý vật tư (VT)
+  "/admin/quan-ly-vat-tu/items",
+  "/admin/quan-ly-vat-tu/receipts",
+  "/admin/quan-ly-vat-tu/issues",
+  "/admin/quan-ly-vat-tu/stocks",
+
   // ✅ MỚI: Quản lý vật tư (VT)
   "/admin/quan-ly-vat-tu/items",
   "/admin/quan-ly-vat-tu/receipts",

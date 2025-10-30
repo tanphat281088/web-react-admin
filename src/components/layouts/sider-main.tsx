@@ -20,7 +20,8 @@ const SiderMain = ({
 
   /** ================== QUY TẮC HIỂN THỊ/ẨN MENU (BỔ SUNG) ================== */
   // ✅ Luôn hiển thị nhóm "Quản lý vật tư"
-  const ALWAYS_SHOW_KEYS = new Set<string>(["quan-ly-vat-tu"]);
+ const ALWAYS_SHOW_KEYS = new Set<string>(["quan-ly-vat-tu", "quan-ly-thu-chi"]);
+
   // ✅ Ẩn hoàn toàn nhóm "Quản lý kho"
   const BLACKLIST_KEYS = new Set<string>(["quan-ly-kho"]);
 
@@ -44,6 +45,29 @@ const SiderMain = ({
     ...filtered,
     ...rawAlways.filter((it) => !existKeys.has(keyOf(it))),
   ];
+
+
+// Bảo đảm child "cashflow" luôn có trong nhóm "quan-ly-thu-chi"
+const rawThuChi = items.find((it: any) => String(it?.key) === "quan-ly-thu-chi");
+const idxThuChi = mergedSidebar.findIndex((it: any) => String(it?.key) === "quan-ly-thu-chi");
+
+if (rawThuChi && idxThuChi >= 0) {
+  const curChildren = mergedSidebar[idxThuChi]?.children || [];
+  const curChildKeys = new Set<string>(curChildren.map((c: any) => String(c?.key ?? "")));
+
+  // lấy đúng child 'cashflow' từ raw (không filter quyền)
+  const cashflowChild = (rawThuChi.children || []).find(
+    (c: any) => String(c?.key) === "cashflow"
+  );
+
+  if (cashflowChild && !curChildKeys.has("cashflow")) {
+    mergedSidebar[idxThuChi] = {
+      ...mergedSidebar[idxThuChi],
+      children: [...curChildren, cashflowChild],
+    };
+  }
+}
+
 
   // Áp dụng blacklist để ẩn hẳn "Quản lý kho"
   const finalSidebar = mergedSidebar.filter(

@@ -120,6 +120,19 @@ export const API_ROUTE_CONFIG = {
   CSKH_POINTS_SEND_ZNS: (eventId: number | string) =>
     `/cskh/points/events/${eventId}/send-zns`, // POST: gửi ZNS 1 lần/biến động
   CSKH_POINTS_RESYNC: "/cskh/points/resync",
+
+  // ===== Cash (Quản lý dòng tiền) =====
+  CASH_ACCOUNTS: "/cash/accounts",
+  CASH_ACCOUNTS_OPTIONS: "/cash/accounts/options",
+  CASH_ALIASES: "/cash/aliases",
+  CASH_LEDGER: "/cash/ledger",
+  CASH_BALANCES: "/cash/balances",
+  CASH_BALANCES_SUMMARY: "/cash/balances/summary",
+  CASH_TRANSFERS: "/cash/internal-transfers",
+
+
+
+
 } as const;
 
 export const URL_CONSTANTS = {
@@ -159,6 +172,11 @@ export const URL_CONSTANTS = {
   VT_STOCKS: "/admin/quan-ly-vat-tu/stocks",
 
   PHIEU_THU: "/admin/quan-ly-thu-chi/phieu-thu",
+  BAO_CAO_THU_CHI: "/admin/quan-ly-thu-chi/bao-cao",  // 👈 thêm tại đây
+
+  // Quản lý dòng tiền (Cashflow)
+CASHFLOW: "/admin/quan-ly-thu-chi/cashflow",
+
 
   CONG_THUC_SAN_XUAT: "/admin/quan-ly-san-xuat/cong-thuc-san-xuat",
   SAN_XUAT: "/admin/quan-ly-san-xuat/san-xuat",

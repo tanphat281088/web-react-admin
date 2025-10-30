@@ -79,6 +79,39 @@ export default function VtIssuesPage(): JSX.Element {
     setOpen(true);
   };
 
+const openClone = (r: Issue) => {
+  // MỞ MODAL TẠO MỚI nhưng prefill từ phiếu gốc
+  setEditing(null);            // quan trọng: submit sang nhánh CREATE
+  form.resetFields();
+
+  form.setFieldsValue({
+    // KHÔNG set so_ct → BE tự sinh số CT mới
+    ngay_ct: dayjs(r.ngay_ct),          // muốn ngày hiện tại thì dùng dayjs()
+    ly_do: r.ly_do,
+    tham_chieu: r.tham_chieu || undefined,
+    ghi_chu: r.ghi_chu || undefined,
+  } as any);
+
+  setItems((r.items || []).map((it, idx) => ({
+    vt_item_id: it.vt_item_id,
+    so_luong: it.so_luong,
+    ghi_chu: undefined,
+    _key: `clone-${idx}-${Date.now()}`,
+  })));
+
+  // đảm bảo Select “Tham chiếu” hiển thị được nhãn cũ nếu có
+  if (r.tham_chieu) {
+    setRefOpts((prev) => {
+      const exists = prev.some(o => o.value === r.tham_chieu);
+      return exists ? prev : [{ value: r.tham_chieu!, label: r.tham_chieu! }, ...prev];
+    });
+  }
+
+  setOpen(true);
+};
+
+
+
   const removeRow = (idx: number) => setItems((arr) => arr.filter((_, i) => i !== idx));
   const addRow = () => setItems((arr) => [...arr, { vt_item_id: 0, so_luong: 1, _key: Math.random().toString(36).slice(2) }]);
 
@@ -143,16 +176,22 @@ export default function VtIssuesPage(): JSX.Element {
 },
 
     { title: "Ghi chú", dataIndex: "ghi_chu" },
-    {
-      title: "Thao tác", key: "x", width: 160, fixed: "right",
-      render: (_, r) => (
-        <Space>
-          <Button size="small" onClick={() => openEdit(r)}>Sửa</Button>
-          <Button size="small" danger onClick={() => del(r)}>Xóa</Button>
-        </Space>
-      )
-    }
-  ], []);
+{
+  title: "Thao tác",
+  key: "x",
+  width: 220,            // tăng chút cho 3 nút
+  fixed: "right",
+  render: (_: any, r) => (
+    <Space>
+      <Button size="small" onClick={() => openEdit(r)}>Sửa</Button>
+      <Button size="small" onClick={() => openClone(r)}>Thêm bản sao</Button>
+      <Button size="small" danger onClick={() => del(r)}>Xóa</Button>
+    </Space>
+  ),
+}
+  ], 
+  
+  []);
 
   return (
     <Card

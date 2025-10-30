@@ -112,6 +112,31 @@ const loadDistinctOptions = async () => {
     setOpen(true);
   };
 
+
+  // ⬇️⬇️ DÁN NGAY SAU HÀM onEdit KẾT THÚC (sau dấu };) ⬇️⬇️
+const onClone = (r: VtItem) => {
+  // MỞ MODAL TẠO MỚI nhưng prefill từ record gốc
+  setEditing(null);                 // rất quan trọng: submit sẽ đi luồng CREATE
+  form.resetFields();
+  form.setFieldsValue({
+    // KHÔNG set ma_vt → BE tự sinh
+    ten_vt: r.ten_vt,
+    danh_muc_vt: r.danh_muc_vt,
+    nhom_vt: r.nhom_vt,
+    don_vi_tinh: r.don_vi_tinh,
+    loai: r.loai,                   // "ASSET" | "CONSUMABLE"
+    trang_thai: r.trang_thai ?? 1,
+    ghi_chu: r.ghi_chu,
+  } as any);
+
+  // đảm bảo dropdown có option để hiển thị
+  loadDistinctOptions();
+  setOpen(true);
+};
+// ⬆️⬆️ HẾT KHỐI DÁN ⬆️⬆️
+
+
+
   const onDelete = async (r: VtItem) => {
     Modal.confirm({
       title: `Xóa vật tư ${r.ma_vt}?`,
@@ -174,26 +199,26 @@ const loadDistinctOptions = async () => {
         width: 160,
         render: (v: string) => (v ? dayjs(v).format("DD/MM/YYYY HH:mm") : ""),
       },
-      {
-        title: "Thao tác",
-        key: "actions",
-        fixed: "right",
-        width: 150,
-        render: (_: any, r: VtItem) => (
-          <Space>
-            <Tooltip title="Sửa">
-              <Button size="small" onClick={() => onEdit(r)}>
-                Sửa
-              </Button>
-            </Tooltip>
-            <Tooltip title="Xóa">
-              <Button size="small" danger onClick={() => onDelete(r)}>
-                Xóa
-              </Button>
-            </Tooltip>
-          </Space>
-        ),
-      },
+{
+  title: "Thao tác",
+  key: "actions",
+  fixed: "right",
+  width: 220, // tăng chút để đủ 3 nút
+  render: (_: any, r: VtItem) => (
+    <Space>
+      <Tooltip title="Sửa">
+        <Button size="small" onClick={() => onEdit(r)}>Sửa</Button>
+      </Tooltip>
+      <Tooltip title="Thêm bản sao">
+        <Button size="small" onClick={() => onClone(r)}>Thêm bản sao</Button>
+      </Tooltip>
+      <Tooltip title="Xóa">
+        <Button size="small" danger onClick={() => onDelete(r)}>Xóa</Button>
+      </Tooltip>
+    </Space>
+  ),
+},
+
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
     []

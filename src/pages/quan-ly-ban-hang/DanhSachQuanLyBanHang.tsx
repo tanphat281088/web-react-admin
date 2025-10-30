@@ -185,23 +185,26 @@ const DanhSachQuanLyBanHang = ({
         return formatVietnameseCurrency(so_tien_da_thanh_toan);
       },
     },
-    {
-      title: "Trạng thái thanh toán",
-      dataIndex: "trang_thai_thanh_toan",
-      render: (trang_thai_thanh_toan: number) => {
-        return (
-          <Tag color={trang_thai_thanh_toan === 1 ? "green" : "red"}>
-            {trang_thai_thanh_toan === 1 ? "Đã hoàn thành" : "Chưa hoàn thành"}
-          </Tag>
-        );
-      },
-      ...selectSearchWithOutApi({
-        dataIndex: "trang_thai_thanh_toan",
-        operator: "equal",
-        nameColumn: "Trạng thái thanh toán",
-        options: OPTIONS_TRANG_THAI_THANH_TOAN,
-      }),
-    },
+{
+  title: "Trạng thái thanh toán",
+  dataIndex: "trang_thai_thanh_toan",
+  key: "trang_thai_thanh_toan",
+  render: (v: any, row: any) => {
+    const st = Number(row?.trang_thai_thanh_toan ?? v ?? 0);
+    if (st === 2) return <Tag color="green">Đã hoàn thành</Tag>;
+    if (st === 1) return <Tag color="gold">Thanh toán một phần</Tag>;
+    return <Tag color="red">Chưa hoàn thành</Tag>;
+  },
+  ...selectSearchWithOutApi({
+    dataIndex: "trang_thai_thanh_toan",
+    operator: "equal",
+    nameColumn: "Trạng thái thanh toán",
+    options: OPTIONS_TRANG_THAI_THANH_TOAN,
+  }),
+}, // ← cần dấu phẩy này để ngăn cách phần tử trong mảng columns
+
+
+
     {
       title: "Trạng thái xuất kho",
       dataIndex: "trang_thai_xuat_kho",

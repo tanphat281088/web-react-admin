@@ -57,6 +57,8 @@ import VtItemsPage from "../pages/vt/VtItemsPage";
 import VtReceiptsPage from "../pages/vt/VtReceiptsPage";
 import VtIssuesPage from "../pages/vt/VtIssuesPage";
 import VtStocksLedgerPage from "../pages/vt/VtStocksLedgerPage";
+import CashflowPage from "../pages/thu-chi/CashflowPage";
+
 
 
 export const router = createBrowserRouter([
@@ -266,6 +268,13 @@ export const router = createBrowserRouter([
             element: <MainLayout />,
             children: [{ index: true, element: <BaoCaoThuChi /> }],
           },
+
+        {
+      path: "cashflow",
+      element: <MainLayout />,
+      children: [{ index: true, element: <CashflowPage /> }],
+    },
+
         ],
       },
 

@@ -23,6 +23,10 @@ const EXTRA_WHITELIST = [
   "/admin/quan-ly-vat-tu/issues",
   "/admin/quan-ly-vat-tu/stocks",
 
+    // ✅ NEW: Quản lý dòng tiền (Cashflow)
+  "/admin/quan-ly-thu-chi/cashflow",
+
+
 ];
 
 /**

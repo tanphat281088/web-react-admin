@@ -38,6 +38,9 @@ const FormPhieuThu = ({
     const khachHangId = Form.useWatch("khach_hang_id", form);
     const phuongThucThanhToan = Form.useWatch("phuong_thuc_thanh_toan", form);
 
+    const taiKhoanId = Form.useWatch("tai_khoan_id", form);
+
+
     const [donHang, setDonHang] = useState<any[]>([]);
 
     const fetchSoTienCanThanhToan = async () => {
@@ -354,21 +357,39 @@ const FormPhieuThu = ({
                     />
                 </Form.Item>
             </Col>
+
+{phuongThucThanhToan === 2 && (
+  <Col span={12}>
+    <SelectFormApi
+      name="tai_khoan_id"
+      label="Tài khoản nhận (CK)"
+      path={API_ROUTE_CONFIG.CASH_ACCOUNTS_OPTIONS}
+      placeholder="Chọn tài khoản nhận tiền"
+      disabled={isDetail}
+      onChange={(opt: any) => {
+        // Tự điền ngân hàng + số tài khoản khi chọn
+        const bank  = opt?.extra?.ngan_hang ?? undefined;
+        const accno = opt?.extra?.so_tai_khoan ?? undefined;
+        if (bank)  form.setFieldValue("ngan_hang", bank);
+        if (accno) form.setFieldValue("so_tai_khoan", accno);
+      }}
+    />
+  </Col>
+)}
+
+
             {phuongThucThanhToan === 2 && (
                 <Col span={6}>
                     <Form.Item
                         name="so_tai_khoan"
                         label="Số tài khoản"
-                        rules={[
-                            {
-                                required: phuongThucThanhToan === 2,
-                                message: "Số tài khoản không được bỏ trống!",
-                            },
-                        ]}
+                        rules={[ { required: phuongThucThanhToan === 2 && !taiKhoanId, message: "Số tài khoản không được bỏ trống!" } ]}
+
                     >
                         <Input
                             placeholder="Nhập số tài khoản"
-                            disabled={isDetail}
+                            disabled={isDetail || !!taiKhoanId}
+
                         />
                     </Form.Item>
                 </Col>
@@ -378,16 +399,13 @@ const FormPhieuThu = ({
                     <Form.Item
                         name="ngan_hang"
                         label="Ngân hàng"
-                        rules={[
-                            {
-                                required: phuongThucThanhToan === 2,
-                                message: "Ngân hàng không được bỏ trống!",
-                            },
-                        ]}
+rules={[ { required: phuongThucThanhToan === 2 && !taiKhoanId, message: "Ngân hàng không được bỏ trống!" } ]}
+
                     >
                         <Input
                             placeholder="Nhập ngân hàng"
-                            disabled={isDetail}
+                         disabled={isDetail || !!taiKhoanId}
+
                         />
                     </Form.Item>
                 </Col>

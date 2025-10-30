@@ -227,8 +227,18 @@ export const sidebarConfig = (navigate: NavigateFunction) => {
           key: "bao-cao",
           label: "Báo cáo thu chi",
           icon: React.createElement(BarChart3, { style: iconStyle }),
-          onClick: () => navigate("/admin/quan-ly-thu-chi/bao-cao"),
+          onClick: () => navigate(URL_CONSTANTS.BAO_CAO_THU_CHI),
+
         },
+
+// ⬇️ DÁN KHỐI NÀY NGAY SAU “Báo cáo thu chi”
+    {
+      key: "cashflow",
+      label: "Quản lý dòng tiền",
+      icon: React.createElement(HandCoins, { style: iconStyle }),
+      onClick: () => navigate(URL_CONSTANTS.CASHFLOW), // "/admin/quan-ly-thu-chi/cashflow"
+    },
+
       ],
     },
 
