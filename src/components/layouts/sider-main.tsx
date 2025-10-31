@@ -20,7 +20,7 @@ const SiderMain = ({
 
   /** ================== QUY TẮC HIỂN THỊ/ẨN MENU (BỔ SUNG) ================== */
   // ✅ Luôn hiển thị nhóm "Quản lý vật tư"
- const ALWAYS_SHOW_KEYS = new Set<string>(["quan-ly-vat-tu", "quan-ly-thu-chi"]);
+ const ALWAYS_SHOW_KEYS = new Set<string>(["quan-ly-vat-tu", "quan-ly-thu-chi", "quan-ly-tien-ich",]);
 
   // ✅ Ẩn hoàn toàn nhóm "Quản lý kho"
   const BLACKLIST_KEYS = new Set<string>(["quan-ly-kho"]);

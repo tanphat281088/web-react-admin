@@ -1,0 +1,56 @@
+/* Khung tổng – dùng 100dvh để tránh bug iOS với 100vh */
+.fb-chat-layout {
+  display: flex;          /* <- đảm bảo là flex container */
+  min-height: 100dvh;
+}
+
+/* Panel chi tiết (bên phải): chia dọc: messages (scroll) + composer (sticky) */
+.fb-detail-pane {
+  display: flex;
+  flex-direction: column;
+  min-height: 60dvh;     /* tối thiểu trên mobile */
+  max-height: 100dvh;
+  overflow: hidden;      /* chặn tràn ngoài */
+}
+
+/* Danh sách messages: fill phần còn lại, có scroll mượt */
+.fb-messages {
+  flex: 1;
+  min-height: 0;         /* bắt buộc để flex child được scroll */
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Composer dính đáy, không bị thanh Safari đè */
+.fb-composer {
+  position: sticky;
+  bottom: 0;
+  background: #fff;
+  z-index: 2;
+  border-top: 1px solid #eee;
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 0px);
+}
+
+/* List hội thoại bên trái: dùng 100dvh để đúng trên iOS */
+.fb-thread-list {
+  height: calc(100dvh - 320px) !important;
+  overflow: auto;
+}
+
+/* ===== MOBILE FIX (QUAN TRỌNG) =====
+   Xếp Sider ở TRÊN, Content (khung chat) ở DƯỚI khi màn hình hẹp */
+@media (max-width: 768px) {
+  /* Đặt layout gốc thành column để Sider và Content xếp dọc */
+  .fb-chat-layout {
+    flex-direction: column !important;   /* <- KEY FIX */
+  }
+
+  /* Sider full width, không giữ width 360px nữa */
+  .fb-chat-layout > .ant-layout-sider {
+    width: 100% !important;
+    max-width: 100% !important;
+    flex: 0 0 auto !important;
+    padding-right: 0 !important;
+    margin-bottom: 12px;
+  }
+}

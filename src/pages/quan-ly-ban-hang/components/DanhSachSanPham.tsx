@@ -132,72 +132,54 @@ const DanhSachSanPham = ({
                       className="product-row"
                       style={{ marginBottom: 8 }}
                     >
-                      {/* TÊN SP/NVL (7) */}
-                      <Col span={7}>
-                        <Form.Item
-                          {...restField}
-                          name={[name, "san_pham_id"]}
-                          label="Tên SP/NVL"
-                          rules={[
-                            { required: true, message: "Vui lòng chọn sản phẩm!" },
-                          ]}
-                        >
-                          <SelectFormApi
-                            path={API_ROUTE_CONFIG.SAN_PHAM + `/options`}
-                            placeholder="Chọn sản phẩm"
-                            showSearch
-                            onChange={() => handleChangeSanPham(name)}
-                            disabled={isDetail}
-                            // ⬇️ Dropdown mượt trong modal
+{/* TÊN SP/NVL (7) */}
+<Col span={7}>
+  <SelectFormApi
+    name={[name, "san_pham_id"]}
+    label="Tên SP/NVL"
+    rules={[{ required: true, message: "Vui lòng chọn sản phẩm!" }]}
+    path={`${API_ROUTE_CONFIG.SAN_PHAM}/options`}
+    placeholder="Chọn sản phẩm"
+    showSearch
+    onChange={() => handleChangeSanPham(name)}
+    disabled={isDetail}
+  />
+</Col>
 
-                          />
-                        </Form.Item>
-                      </Col>
+{/* ĐƠN VỊ TÍNH (3) */}
+<Col span={3}>
+  <SelectFormApi
+    name={[name, "don_vi_tinh_id"]}
+    label="Đơn vị tính"
+    rules={[{ required: true, message: "Vui lòng chọn đơn vị tính!" }]}
+    path={
+      sanPhamId
+        ? `${API_ROUTE_CONFIG.DON_VI_TINH}/options-by-san-pham/${sanPhamId}`
+        : ""
+    }
+    reload={sanPhamId}
+    placeholder="Chọn đơn vị tính"
+    showSearch
+    disabled={isDetail || !sanPhamId}
+    onChange={(value) => {
+      const loaiGia = danhSachSanPham?.[name]?.loai_gia;
+      if (loaiGia) {
+        handleGetGiaBanSanPham(
+          name,
+          danhSachSanPham?.[name]?.san_pham_id,
+          value,
+          loaiGia
+        );
+      } else {
+        form.setFieldValue(
+          ["danh_sach_san_pham", name, "don_gia"],
+          undefined
+        );
+      }
+    }}
+  />
+</Col>
 
-                      {/* ĐƠN VỊ TÍNH (3) */}
-                      <Col span={3}>
-                        <Form.Item
-                          {...restField}
-                          name={[name, "don_vi_tinh_id"]}
-                          label="Đơn vị tính"
-                          rules={[
-                            { required: true, message: "Vui lòng chọn đơn vị tính!" },
-                          ]}
-                          dependencies={["san_pham_id"]}
-                        >
-                          <SelectFormApi
-                            path={
-                              sanPhamId
-                                ? API_ROUTE_CONFIG.DON_VI_TINH +
-                                  `/options-by-san-pham/${sanPhamId}`
-                                : ""
-                            }
-                            reload={sanPhamId}
-                            placeholder="Chọn đơn vị tính"
-                            showSearch
-                            disabled={isDetail || !sanPhamId}
-                            onChange={(value) => {
-                              // nếu đã chọn loại giá, auto lấy giá
-                              const loaiGia = danhSachSanPham?.[name]?.loai_gia;
-                              if (loaiGia) {
-                                handleGetGiaBanSanPham(
-                                  name,
-                                  danhSachSanPham?.[name]?.san_pham_id,
-                                  value,
-                                  loaiGia
-                                );
-                              } else {
-                                form.setFieldValue(
-                                  ["danh_sach_san_pham", name, "don_gia"],
-                                  undefined
-                                );
-                              }
-                            }}
-                            // ⬇️ Dropdown mượt trong modal
-
-                          />
-                        </Form.Item>
-                      </Col>
 
                       {/* LOẠI GIÁ (3) */}
                       <Col span={3}>

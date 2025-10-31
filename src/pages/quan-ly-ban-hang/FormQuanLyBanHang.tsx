@@ -41,12 +41,20 @@ const SERVER_DATETIME_FORMAT = "YYYY-MM-DD HH:mm:ss";
 const FormQuanLyBanHang = ({
   form,
   isDetail = false,
+  /** ✅ PHẠM VI CHỈNH SỬA: 'all' | 'payment' | 'locked' (mặc định 'all' để tương thích) */
+  editScope = "all",
 }: {
   form: FormInstance;
   isDetail?: boolean;
+  editScope?: "all" | "payment" | "locked";
 }) => {
   const loaiKhachHang = Form.useWatch("loai_khach_hang", form);
   const loaiThanhToan = Form.useWatch("loai_thanh_toan", form);
+
+  /** ✅ Cờ quyền sửa theo phạm vi */
+  const canEditAll = editScope === "all";
+  const canEditPayment = editScope === "payment";
+  const isLocked = editScope === "locked";
 
   const [tongTienHang, setTongTienHang] = useState<number>(0);
 
@@ -189,7 +197,7 @@ const FormQuanLyBanHang = ({
           <Input
             placeholder="Tự sinh sau khi lưu"
             // Cho phép xem (read-only) — nếu đang ở màn tạo mới sẽ để trống
-            disabled={isDetail}
+            disabled={isDetail || !canEditAll || isLocked}
           />
         </Form.Item>
       </Col>
@@ -205,7 +213,7 @@ const FormQuanLyBanHang = ({
             placeholder="Nhập ngày tạo đơn hàng"
             style={{ width: "100%" }}
             format="DD/MM/YYYY"
-            disabled={isDetail}
+            disabled={isDetail || !canEditAll || isLocked}
             /* ✅ Neo popup trong modal để dễ bấm */
             getPopupContainer={(node) => (node && node.closest(".ant-modal")) || document.body}
           />
@@ -222,7 +230,7 @@ const FormQuanLyBanHang = ({
           <Select
             options={OPTIONS_LOAI_KHACH_HANG}
             placeholder="Chọn loại khách hàng"
-            disabled={isDetail}
+            disabled={isDetail || !canEditAll || isLocked}
             /* ⬇️ render dropdown TRONG modal để không bị lớp khác ăn click */
             getPopupContainer={(trigger) =>
               (trigger && trigger.closest(".ant-modal")) || document.body
@@ -244,7 +252,7 @@ const FormQuanLyBanHang = ({
           <Select
             options={donHangTrangThaiSelect}
             placeholder="Chọn trạng thái"
-            disabled={isDetail}
+            disabled={isDetail || !canEditAll || isLocked}
             /* ✅ Neo popup trong modal để dễ bấm */
             getPopupContainer={(node) => (node && node.closest(".ant-modal")) || document.body}
             dropdownMatchSelectWidth={false}
@@ -262,7 +270,7 @@ const FormQuanLyBanHang = ({
             rules={[{ required: true, message: "Vui lòng chọn khách hàng" }]}
             path={API_ROUTE_CONFIG.KHACH_HANG + "/options"}
             placeholder="Chọn khách hàng"
-            disabled={isDetail}
+            disabled={isDetail || !canEditAll || isLocked}
             getPopupContainer={(node) => (node && node.closest(".ant-modal")) || document.body}
             dropdownMatchSelectWidth={false}
             popupClassName="phg-select-mobile phg-dd"
@@ -294,7 +302,7 @@ const FormQuanLyBanHang = ({
               },
             ]}
           >
-            <Input placeholder="Nhập tên khách hàng" disabled={isDetail} />
+            <Input placeholder="Nhập tên khách hàng" disabled={isDetail || !canEditAll || isLocked} />
           </Form.Item>
         </Col>
       )}
@@ -312,7 +320,7 @@ const FormQuanLyBanHang = ({
               { pattern: phoneNumberVNPattern, message: "Số điện thoại không hợp lệ!" },
             ]}
           >
-            <Input placeholder="Nhập số điện thoại" disabled={isDetail} />
+            <Input placeholder="Nhập số điện thoại" disabled={isDetail || !canEditAll || isLocked} />
           </Form.Item>
         </Col>
       )}
@@ -323,7 +331,7 @@ const FormQuanLyBanHang = ({
           label="Địa chỉ giao hàng"
           rules={[{ required: true, message: "Địa chỉ giao hàng không được bỏ trống!" }]}
         >
-          <Input placeholder="Nhập địa chỉ giao hàng" disabled={isDetail} />
+          <Input placeholder="Nhập địa chỉ giao hàng" disabled={isDetail || !canEditAll || isLocked} />
         </Form.Item>
       </Col>
 
@@ -334,7 +342,7 @@ const FormQuanLyBanHang = ({
           label="Tên người nhận"
           rules={[{ max: 191, message: "Tối đa 191 ký tự" }]}
         >
-          <Input placeholder="Nhập tên người nhận" disabled={isDetail} />
+          <Input placeholder="Nhập tên người nhận" disabled={isDetail || !canEditAll || isLocked} />
         </Form.Item>
       </Col>
 
@@ -347,7 +355,7 @@ const FormQuanLyBanHang = ({
             { pattern: phoneNumberVNPattern, message: "Số điện thoại không hợp lệ!" },
           ]}
         >
-          <Input placeholder="Nhập số điện thoại người nhận (0… hoặc +84…)" disabled={isDetail} />
+          <Input placeholder="Nhập số điện thoại người nhận (0… hoặc +84…)" disabled={isDetail || !canEditAll || isLocked} />
         </Form.Item>
       </Col>
 
@@ -372,7 +380,7 @@ const FormQuanLyBanHang = ({
             style={{ width: "100%" }}
             showTime
             format={CLIENT_DATETIME_FORMAT}
-            disabled={isDetail}
+            disabled={isDetail || !canEditAll || isLocked}
             /* ✅ Neo popup trong modal để dễ bấm */
             getPopupContainer={(node) => (node && node.closest(".ant-modal")) || document.body}
           />
@@ -381,7 +389,8 @@ const FormQuanLyBanHang = ({
       {/* ===== END – THÔNG TIN NGƯỜI NHẬN ===== */}
 
       <Col span={24} style={{ marginBottom: 20 }}>
-        <DanhSachSanPham form={form} isDetail={isDetail} />
+        {/* ✅ CHỈ cho sửa danh sách SP khi canEditAll */}
+        <DanhSachSanPham form={form} isDetail={isDetail || !canEditAll || isLocked} />
       </Col>
 
       <Col span={8} xs={24} sm={24} md={24} lg={8} xl={8}>
@@ -393,7 +402,7 @@ const FormQuanLyBanHang = ({
         >
           <InputNumber
             placeholder="Nhập giảm giá"
-            disabled={isDetail}
+            disabled={isDetail || !canEditAll || isLocked}
             style={{ width: "100%" }}
             addonAfter="đ"
             formatter={formatter}
@@ -413,7 +422,7 @@ const FormQuanLyBanHang = ({
         >
           <InputNumber
             placeholder="Nhập chi phí vận chuyển"
-            disabled={isDetail}
+            disabled={isDetail || !canEditAll || isLocked}
             style={{ width: "100%" }}
             addonAfter="đ"
             formatter={formatter}
@@ -451,7 +460,7 @@ const FormQuanLyBanHang = ({
           <Select
             options={OPTIONS_LOAI_THANH_TOAN}
             placeholder="Chọn loại thanh toán"
-            disabled={isDetail}
+            disabled={isDetail || !(canEditAll || canEditPayment) || isLocked}
             /* ⬇️ render dropdown TRONG modal, tránh lớp khác ăn click */
             getPopupContainer={(trigger) =>
               (trigger && trigger.closest(".ant-modal")) || document.body
@@ -478,7 +487,8 @@ const FormQuanLyBanHang = ({
         </Typography.Text>
       </Col>
 
-      {/* Số tiền đã thanh toán — chỉ hiện khi Thanh toán một phần (value = 1) */}
+      {/* Số tiền đã thanh toán — chỉ hiện khi Thanh toán một phần (value = 1)
+          ⚠️ Theo yêu cầu: khi đang giao/đã giao chỉ được đổi "Loại thanh toán" → ô này CHỈ cho sửa khi canEditAll */}
       {loaiThanhToan === OPTIONS_LOAI_THANH_TOAN[1].value && (
         <Col span={8} xs={24} sm={24} md={24} lg={8} xl={8}>
           <Form.Item
@@ -499,7 +509,7 @@ const FormQuanLyBanHang = ({
           >
             <InputNumber
               placeholder="Nhập số tiền đã thanh toán"
-              disabled={isDetail}
+              disabled={isDetail || !canEditAll || isLocked}
               style={{ width: "100%" }}
               addonAfter="đ"
               formatter={formatter}
@@ -524,7 +534,7 @@ const FormQuanLyBanHang = ({
               <Button
                 icon={<ReloadOutlined />}
                 onClick={handleResync}
-                disabled={!form.getFieldValue("ma_don_hang")}
+                disabled={isLocked || !form.getFieldValue("ma_don_hang")}
               >
                 Đồng bộ phiếu thu
               </Button>
@@ -535,7 +545,7 @@ const FormQuanLyBanHang = ({
 
       <Col span={24}>
         <Form.Item name="ghi_chu" label="Ghi chú">
-          <Input.TextArea placeholder="Ghi chú" disabled={isDetail} />
+          <Input.TextArea placeholder="Ghi chú" disabled={isDetail || !canEditAll || isLocked} />
         </Form.Item>
       </Col>
     </Row>

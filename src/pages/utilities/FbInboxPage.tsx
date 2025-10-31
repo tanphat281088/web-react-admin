@@ -53,6 +53,16 @@ export default function FbInboxPage(): JSX.Element {
   const [draft, setDraft] = useState<string>("");
   const [sending, setSending] = useState<boolean>(false);
 
+  const [isTyping, setIsTyping] = useState<boolean>(false);
+
+  const [lastTypeAt, setLastTypeAt] = useState<number>(0);
+
+
+
+  // ===== polling config =====
+const POLL_MS = 4000; // 4 giây/lần
+
+
   // ===== derived =====
   const active = useMemo(() => list.find((c) => c.id === activeId) || null, [list, activeId]);
   const within24h = active?.within24h ?? true;
@@ -72,6 +82,35 @@ export default function FbInboxPage(): JSX.Element {
     if (activeId != null) loadThread(activeId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeId]);
+
+// ===== POLLING danh sách hội thoại (dịu hơn khi đang gõ) =====
+useEffect(() => {
+  if (isTyping) return;                               // đừng poll khi đang gõ
+  const t = setInterval(() => {
+    if (!loadingList) {
+      loadList(page);                                 // giữ trang hiện tại
+    }
+  }, 12000);                                          // 12 giây/lần
+  return () => clearInterval(t);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [page, filter, q, enabled, loadingList, isTyping]);
+
+
+// ===== POLLING thread đang mở mỗi 4s (nếu có activeId) =====
+useEffect(() => {
+  if (!activeId || sending) return;
+  const t = setInterval(() => {
+    const now = Date.now();
+    // Nếu đang gõ và lần gõ cuối < 2500ms thì bỏ qua tick này; ngừng tay >2.5s là tự chạy
+    if (isTyping && (now - lastTypeAt) < 2500) return;
+    loadThread(activeId, { silent: true });
+  }, POLL_MS);
+  return () => clearInterval(t);
+}, [activeId, sending, isTyping, lastTypeAt]);
+
+
+
+
 
     // ✅ Nếu chưa có hội thoại nào đang được chọn, tự động chọn dòng đầu tiên khi list có dữ liệu
   useEffect(() => {
@@ -136,18 +175,30 @@ async function loadList(nextPage: number) {
 }
 
 
-  async function loadThread(id: number) {
-    try {
-      setLoadingThread(true);
-      const resp = await fbConversationShow(id);
-      setMessages(resp.messages || []);
-    } catch (err: any) {
-      console.error(err);
-      message.error(`Không tải được hội thoại #${id}: ${err?.message || err}`);
-    } finally {
-      setLoadingThread(false);
-    }
+async function loadThread(id: number, opts?: { silent?: boolean }) {
+  const silent = !!opts?.silent;
+  try {
+    if (!silent) setLoadingThread(true);
+    const resp = await fbConversationShow(id);
+    const serverMsgs: FbMessage[] = resp.messages || [];
+
+    // Chỉ cập nhật khi có thay đổi để tránh nhấp nháy
+    setMessages((prev) => {
+      const prevLast = prev[prev.length - 1]?.id;
+      const servLast = serverMsgs[serverMsgs.length - 1]?.id;
+      if (prev.length === serverMsgs.length && prevLast === servLast) {
+        return prev;                                   // không đổi -> không re-render
+      }
+      return serverMsgs;
+    });
+
+  } catch (err: any) {
+    console.error(err);
+    message.error(`Không tải được hội thoại #${id}: ${err?.message || err}`);
+  } finally {
+    if (!silent) setLoadingThread(false);
   }
+}
 
   async function onSend() {
     if (!draft.trim()) return;
@@ -165,10 +216,39 @@ async function loadList(nextPage: number) {
     }
     try {
       setSending(true);
+
+      // --- OPTIMISTIC: hiển thị ngay message mình gửi ---
+const optimistic = {
+  id: Math.random(),          // tạm thời
+  conversation_id: active.id,
+  direction: "out" as const,
+  mid: undefined,
+  text_raw: draft.trim(),
+  text_translated: null,
+  text_polished: null,
+  src_lang: "vi",
+  dst_lang: "en",
+  attachments: [],
+  delivered_at: null,
+  read_at: null,
+  created_at: new Date().toISOString(),
+};
+// append vào UI
+setMessages(prev => [...prev, optimistic as any]);
+
       await fbReply(active.id, { text_vi: draft.trim() }); // BE hiện đang placeholder (echo)
       setDraft("");
       // Sau này khi BE lưu message out → loadThread(active.id) để refresh
       message.success("Đã gửi (demo placeholder).");
+
+      // làm tươi thread sau khi hàng đợi xử lý
+setTimeout(() => loadThread(active.id!), 1200);
+setTimeout(() => loadThread(active.id!), 4000);
+// làm tươi list để cập nhật preview bên trái
+setTimeout(() => loadList(1), 1500);
+
+
+
     } catch (err: any) {
       console.error(err);
       message.error(`Gửi thất bại: ${err?.message || err}`);
@@ -233,21 +313,50 @@ async function loadList(nextPage: number) {
             </div>
           ) : (
             <div style={{ padding: "0 12px 12px" }}>
-              {!enabled ? (
-                <Alert
-                  type="warning"
-                  showIcon
-                  message="Module đang TẮT (FB_ENABLED=false)"
-                  description="Vào .env bật FB_ENABLED=true khi bạn sẵn sàng."
-                />
-              ) : (
-                <Alert
-                  type="success"
-                  showIcon
-                  message="Module đang BẬT"
-                  description={`Provider: ${health?.provider || "google"} | Polish: ${health?.ai_polish ? "ON" : "OFF"}`}
-                />
-              )}
+
+
+{!enabled ? (
+  <Alert
+    type="warning"
+    showIcon
+    message="Module đang TẮT (FB_ENABLED=false)"
+    description="Vào .env bật FB_ENABLED=true khi bạn sẵn sàng."
+  />
+) : (
+  (() => {
+    const providerRaw = (health?.provider || "google").toString().toLowerCase();
+    const providerLabel =
+      providerRaw === "google_apikey" || providerRaw === "google"
+        ? "Google Translate kết hợp AI"   // <— bạn muốn hiển thị thế này
+        : providerRaw === "openai"
+        ? "OpenAI"
+        : providerRaw === "hybrid"
+        ? "Kết hợp (Google + OpenAI)"
+        : providerRaw;
+
+    const polishLabel = health?.ai_polish ? "BẬT" : "TẮT";
+    const toneMap: Record<string, string> = {
+      neutral: "Trung tính",
+      formal: "Lịch sự",
+      friendly: "Thân mật",
+    };
+    const toneLabel =
+      toneMap[(health?.ai_tone || "neutral").toLowerCase()] ||
+      (health?.ai_tone ?? "—");
+
+    return (
+      <Alert
+        type="success"
+        showIcon
+        message="Tư vấn Facebook: ĐANG HOẠT ĐỘNG"
+        description={`Dịch: ${providerLabel} | Trau chuốt: ${polishLabel} | Giọng điệu: ${toneLabel}`}
+      />
+    );
+  })()
+)}
+
+           
+           
             </div>
           )}
 
@@ -400,7 +509,11 @@ async function loadList(nextPage: number) {
                   <Text type="secondary">Nhập bằng tiếng Việt:</Text>
                   <Input.TextArea
                     value={draft}
-                    onChange={(e) => setDraft(e.target.value)}
+                    onChange={(e) => { setDraft(e.target.value); setLastTypeAt(Date.now()); }}
+
+
+                    onFocus={() => setIsTyping(true)}      // + thêm
+  onBlur={() => setIsTyping(false)}      // + thêm
                     placeholder="Nhập nội dung trả lời bằng tiếng Việt..."
                     autoSize={{ minRows: 3, maxRows: 6 }}
                   />
