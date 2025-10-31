@@ -455,3 +455,30 @@ label {
 .custom-sidebar-menu-scrollbar:hover {
     scrollbar-width: thin;
 }
+
+
+
+
+/* === HOTFIX: Chỉ áp cho trang Utilities → FB Inbox === */
+.fb-inbox {
+  display: flex !important;            /* giữ layout flex cho container */
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;        /* không cho wrap */
+}
+
+.fb-inbox > .ant-layout-sider {
+  flex: 0 0 auto !important;           /* sider cố định chiều rộng */
+}
+
+.fb-inbox > .ant-layout-content {
+  flex: 1 1 auto !important;
+  width: auto !important;              /* HUỶ width:100% toàn cục */
+  min-width: 0 !important;             /* tránh tràn làm vỡ bố cục */
+}
+
+/* Nested layout bên phải không bị wrap */
+.fb-inbox .ant-layout {
+  display: flex !important;
+  flex-direction: column !important;   /* layout lồng bên phải theo cột: Header + Content */
+  flex-wrap: nowrap !important;
+}

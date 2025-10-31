@@ -73,6 +73,14 @@ export default function FbInboxPage(): JSX.Element {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeId]);
 
+    // ✅ Nếu chưa có hội thoại nào đang được chọn, tự động chọn dòng đầu tiên khi list có dữ liệu
+  useEffect(() => {
+    if ((activeId == null || !list.some(c => c.id === activeId)) && list.length > 0) {
+      setActiveId(list[0].id);
+    }
+  }, [list]); // chỉ chạy khi list thay đổi
+
+
   // ===== loaders =====
   async function loadHealth() {
     try {
@@ -88,32 +96,45 @@ export default function FbInboxPage(): JSX.Element {
     }
   }
 
-  async function loadList(nextPage: number) {
-    try {
-      setLoadingList(true);
-      setPage(nextPage);
-      const assigned = filter === "mine" ? "mine" : filter === "unassigned" ? "unassigned" : undefined;
-      const status = filter === "expired" ? "open" : undefined; // expired là filter hiển thị, BE sau này tự tính
-      const resp = await fbConversations({
-        page: nextPage,
-        per_page: perPage,
-        q: q.trim() || undefined,
-        assigned,
-        status,
-      });
-      setList(resp.data || []);
-      setTotal(resp.pagination?.total || 0);
-      if (!resp.data?.length) {
-        setActiveId(null);
-        setMessages([]);
+async function loadList(nextPage: number) {
+  try {
+    setLoadingList(true);
+    setPage(nextPage);
+
+    const assigned =
+      filter === "mine" ? "mine" : filter === "unassigned" ? "unassigned" : undefined;
+    const status = filter === "expired" ? "open" : undefined; // expired chỉ là filter hiển thị
+
+    const resp = await fbConversations({
+      page: nextPage,
+      per_page: perPage,
+      q: q.trim() || undefined,
+      assigned,
+      status,
+    });
+
+    const rows = resp.data || [];
+    setList(rows);
+    setTotal(resp.pagination?.total || 0);
+
+    // ✅ Giữ lựa chọn nếu còn trong list; nếu chưa có thì auto-chọn dòng đầu tiên.
+    if (rows.length > 0) {
+      const stillExists = rows.some((c) => c.id === activeId);
+      if (!stillExists) {
+        setActiveId(rows[0].id);
       }
-    } catch (err: any) {
-      console.error(err);
-      message.error(`Không tải được danh sách hội thoại: ${err?.message || err}`);
-    } finally {
-      setLoadingList(false);
+    } else {
+      setActiveId(null);
+      setMessages([]);
     }
+  } catch (err: any) {
+    console.error(err);
+    message.error(`Không tải được danh sách hội thoại: ${err?.message || err}`);
+  } finally {
+    setLoadingList(false);
   }
+}
+
 
   async function loadThread(id: number) {
     try {
@@ -158,7 +179,10 @@ export default function FbInboxPage(): JSX.Element {
 
   // ===== render =====
   return (
-    <Layout style={{ height: "calc(100vh - 120px)", background: "transparent" }}>
+<Layout className="fb-inbox" style={{ minHeight: "calc(100vh - 120px)", background: "transparent" }}>
+
+
+
       {/* LEFT */}
       <Sider width={360} style={{ background: "transparent", paddingRight: 12 }}>
         <Card
