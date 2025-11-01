@@ -7,12 +7,6 @@ import { getDataById } from "../../services/getData.api";
 import { setReload } from "../../redux/slices/main.slice";
 import { putData } from "../../services/updateData";
 import dayjs, { Dayjs } from "dayjs";
-import { ConfigProvider } from "antd";
-
-/* ✅ Responsive hook để nhận biết mobile */
-import { useResponsive } from "../../hooks/useReponsive";
-/* ✅ Thanh hành động cố định đáy cho mobile */
-import MobileActionBar from "../../components/responsive/MobileActionBar";
 
 const SuaQuanLyBanHang = ({
   path,
@@ -24,20 +18,10 @@ const SuaQuanLyBanHang = ({
   title: string;
 }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);       // loading khi fetch chi tiết
-  const [isSubmitting, setIsSubmitting] = useState(false); // loading khi submit
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [form] = Form.useForm();
   const dispatch = useDispatch();
-
-  /* ✅ Dùng để điều chỉnh modal trên mobile */
-  const { isMobile } = useResponsive();
-
-  /* ✅ PHẠM VI CHỈNH SỬA:
-     - 'all'      : Chưa giao → chỉnh mọi thứ
-     - 'payment'  : Đang giao / Đã giao nhưng CHƯA thanh toán đủ → chỉ chỉnh thanh toán
-     - 'locked'   : Đã giao & Đã thanh toán đủ (hoặc Đã hủy) → khóa toàn bộ
-  */
-  const [editScope, setEditScope] = useState<'all' | 'payment' | 'locked'>('all');
 
   const showModal = async () => {
     setIsModalOpen(true);
@@ -50,6 +34,7 @@ const SuaQuanLyBanHang = ({
       const val = data[key];
       if (!val) return;
 
+      // giữ đủ giờ cho các field có thể là datetime
       const looksLikeDateTime =
         /(thoi_gian|_thoi|_at|datetime)/i.test(key) ||
         key === "nguoi_nhan_thoi_gian";
@@ -59,7 +44,7 @@ const SuaQuanLyBanHang = ({
         key !== "nguoi_nhan_thoi_gian";
 
       if (looksLikeDateTime) {
-        data[key] = dayjs(val); // giữ cả giờ
+        data[key] = dayjs(val); // để nguyên giờ
       } else if (looksLikeDateOnly) {
         data[key] = dayjs(val, "YYYY-MM-DD");
       }
@@ -83,17 +68,6 @@ const SuaQuanLyBanHang = ({
       danh_sach_san_pham: danhSachSanPham,
     });
 
-    /* ✅ XÁC ĐỊNH PHẠM VI CHỈNH SỬA THEO TRẠNG THÁI */
-    const st  = Number(data?.trang_thai_don_hang ?? 0);     // 0=Chưa giao,1=Đang giao,2=Đã giao,3=Đã hủy
-    const pay = Number(data?.trang_thai_thanh_toan ?? 0);   // 0=Chưa, 1=Một phần, 2=Đã đủ
-    if (st === 0) {
-      setEditScope('all');
-    } else if (st === 1 || st === 2) {
-      setEditScope(pay === 2 ? 'locked' : 'payment');
-    } else {
-      setEditScope('locked');
-    }
-
     setIsLoading(false);
   };
 
@@ -103,12 +77,6 @@ const SuaQuanLyBanHang = ({
   };
 
   const onUpdate = async (values: any) => {
-    // ✅ Chặn submit nếu bị khóa
-    if (editScope === 'locked') {
-      console.warn("Đơn đã hoàn tất, không được chỉnh sửa.");
-      return;
-    }
-
     setIsSubmitting(true);
     try {
       const closeModel = () => {
@@ -158,7 +126,6 @@ const SuaQuanLyBanHang = ({
         size="small"
         title={`Sửa ${title}`}
         icon={<EditOutlined />}
-        loading={isLoading}
       />
       <Modal
         title={`Sửa ${title}`}
@@ -166,38 +133,20 @@ const SuaQuanLyBanHang = ({
         onCancel={handleCancel}
         maskClosable={false}
         centered
-        /* ✅ Responsive: mobile full-width, desktop giữ 1200 như cũ */
-        width={isMobile ? "100%" : 1200}
-        /* ✅ Body cuộn mượt & padding gọn trên mobile */
-        styles={{
-          body: {
-            maxHeight: isMobile ? "calc(100vh - 140px)" : undefined,
-            overflow: "auto",
-            padding: isMobile ? 12 : 24,
-          },
-        }}
-        /* ✅ Desktop/Tablet: giữ footer cũ; Mobile: ẩn footer để dùng MobileActionBar */
-        footer={
-          isMobile
-            ? null
-            : [
-                <Button
-                  key="submit"
-                  form={`formSuaQuanLyBanHang-${id}`}
-                  type="primary"
-                  htmlType="submit"
-                  size="large"
-                  loading={isSubmitting}
-                  disabled={editScope === 'locked'}   // ✅ khóa nút Lưu khi locked
-                >
-                  Lưu
-                </Button>,
-              ]
-        }
+        width={1200}
+        footer={[
+          <Button
+            key="submit"
+            form={`formSuaQuanLyBanHang-${id}`}
+            type="primary"
+            htmlType="submit"
+            size="large"
+            loading={isSubmitting}
+          >
+            Lưu
+          </Button>,
+        ]}
       >
-        {/* ✅ GÓI BẰNG ConfigProvider để Select/DatePicker vẽ dropdown TRONG modal */}
-        {/* ✅ (Rollback) Render dropdown ra body như trước để không bị ăn click */}
-        {/* ====== FORM ====== */}
         <Form
           id={`formSuaQuanLyBanHang-${id}`}
           form={form}
@@ -207,19 +156,8 @@ const SuaQuanLyBanHang = ({
             console.error("Form validation failed:", errorInfo);
           }}
         >
-          {/* ✅ Truyền editScope xuống form để disable field theo quy tắc */}
-          <FormQuanLyBanHang form={form} isDetail={false} /* giữ prop cũ */ editScope={editScope as any} />
+          <FormQuanLyBanHang form={form} />
         </Form>
-
-        {/* ✅ Thanh hành động cố định đáy — CHỈ hiển thị khi mobile */}
-        {isMobile && (
-          <MobileActionBar
-            primaryLabel="Lưu"
-            onPrimary={() => editScope !== 'locked' && form.submit()}  // ✅ chặn submit khi locked
-            primaryLoading={isSubmitting}
-                             // ✅ khóa nút trên mobile
-          />
-        )}
       </Modal>
     </>
   );

@@ -42,6 +42,8 @@ const FormPhieuChi = ({
     const phieuNhapKhoId = Form.useWatch("phieu_nhap_kho_id", form);
     const categoryParentCode = Form.useWatch("category_parent_code", form); // NEW: theo dõi danh mục CHA
 
+    // ⭐ NEW: theo dõi tài khoản chi (CK)
+    const taiKhoanId = Form.useWatch("tai_khoan_id", form);
 
     const [nhieuPhieuNhapKho, setNhieuPhieuNhapKho] = useState<any[]>([]);
 
@@ -93,8 +95,7 @@ const FormPhieuChi = ({
                           ...item,
                           so_tien_thanh_toan: chiTietPhieuChi?.find(
                               (item: any) =>
-                                  item.ma_phieu_nhap_kho ==
-                                  item.ma_phieu_nhap_kho
+                                  item.ma_phieu_nhap_kho == item.ma_phieu_nhap_kho
                           )?.tong_tien_da_thanh_toan,
                       }))
         );
@@ -232,7 +233,8 @@ const FormPhieuChi = ({
                     />
                 </Form.Item>
             </Col>
-                        {/* ================= Danh mục chi (CHA → CON) ================= */}
+
+            {/* ================= Danh mục chi (CHA → CON) ================= */}
             <Col span={24}>
                 <SelectFormApi
                     name="category_parent_code"
@@ -251,17 +253,14 @@ const FormPhieuChi = ({
                 <SelectFormApi
                     name="category_id"
                     label="Danh mục chi (CON)"
-                    // Nếu chưa chọn CHA thì disable Select CON
-path={
-  categoryParentCode
-    ? `/expense-categories/options?parent_id=${categoryParentCode}`  // dùng parent_id (ID cha)
-    : `/expense-categories/options?parent_code=COGS`                 // fallback khi chưa chọn
-}
-
+                    path={
+                        categoryParentCode
+                            ? `/expense-categories/options?parent_id=${categoryParentCode}`
+                            : `/expense-categories/options?parent_code=COGS`
+                    }
                     placeholder="Chọn danh mục chi (con) theo nhóm CHA"
                     rules={[
                         {
-                            // Mức A: bắt buộc khi Loại phiếu = 3 (Chi khác)
                             required: loaiPhieuChi === 3,
                             message:
                                 "Vui lòng chọn danh mục chi (CON) khi Loại phiếu = Chi khác!",
@@ -395,23 +394,6 @@ path={
                 </Form.Item>
             </Col>
 
-            {/* <Col span={24}>
-                {isDetail && chiTietPhieuChi && chiTietPhieuChi.length > 0 && (
-                    <>
-                        <Typography.Title level={5}>
-                            Chi tiết phiếu chi
-                        </Typography.Title>
-                        <Table
-                            columns={columns}
-                            dataSource={chiTietPhieuChi}
-                            pagination={false}
-                            bordered
-                            style={{ marginBottom: 20 }}
-                        />
-                    </>
-                )}
-            </Col> */}
-
             <Col span={12}>
                 <Form.Item
                     name="nguoi_nhan"
@@ -426,6 +408,7 @@ path={
                     <Input placeholder="Nhập người nhận" disabled={isDetail} />
                 </Form.Item>
             </Col>
+
             <Col span={12}>
                 <Form.Item
                     name="phuong_thuc_thanh_toan"
@@ -445,6 +428,28 @@ path={
                     />
                 </Form.Item>
             </Col>
+
+            {/* ⭐ NEW: Khi chuyển khoản → chọn tài khoản chi (CK) giống Phiếu thu */}
+            {phuongThucThanhToan === 2 && (
+                <Col span={12}>
+                    <SelectFormApi
+                        name="tai_khoan_id"
+                        label="Tài khoản chi (CK)"
+                        path={API_ROUTE_CONFIG.CASH_ACCOUNTS_OPTIONS}
+                        placeholder="Chọn tài khoản chuyển đi"
+                        disabled={isDetail}
+                        onChange={(opt: any) => {
+                            // Tự điền ngân hàng + số tài khoản khi chọn
+                            const bank  = opt?.extra?.ngan_hang ?? undefined;
+                            const accno = opt?.extra?.so_tai_khoan ?? undefined;
+                            if (bank)  form.setFieldValue("ngan_hang", bank);
+                            if (accno) form.setFieldValue("so_tai_khoan", accno);
+                        }}
+                    />
+                </Col>
+            )}
+
+            {/* Hai ô dưới vẫn giữ để cho phép nhập tay khi KHÔNG chọn từ dropdown */}
             {phuongThucThanhToan === 2 && (
                 <Col span={12}>
                     <Form.Item
@@ -452,18 +457,20 @@ path={
                         label="Số tài khoản"
                         rules={[
                             {
-                                required: phuongThucThanhToan === 2,
+                                // chỉ bắt buộc khi chuyển khoản và CHƯA chọn từ dropdown
+                                required: phuongThucThanhToan === 2 && !taiKhoanId,
                                 message: "Số tài khoản không được bỏ trống!",
                             },
                         ]}
                     >
                         <Input
                             placeholder="Nhập số tài khoản"
-                            disabled={isDetail}
+                            disabled={isDetail || !!taiKhoanId}
                         />
                     </Form.Item>
                 </Col>
             )}
+
             {phuongThucThanhToan === 2 && (
                 <Col span={12}>
                     <Form.Item
@@ -471,18 +478,19 @@ path={
                         label="Ngân hàng"
                         rules={[
                             {
-                                required: phuongThucThanhToan === 2,
+                                required: phuongThucThanhToan === 2 && !taiKhoanId,
                                 message: "Ngân hàng không được bỏ trống!",
                             },
                         ]}
                     >
                         <Input
                             placeholder="Nhập ngân hàng"
-                            disabled={isDetail}
+                            disabled={isDetail || !!taiKhoanId}
                         />
                     </Form.Item>
                 </Col>
             )}
+
             {loaiPhieuChi === 3 && (
                 <Col span={24}>
                     <Form.Item

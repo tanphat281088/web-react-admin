@@ -81,9 +81,8 @@ const DanhSachSanPham = ({
       <Card>
         <Typography.Title level={4}>Danh sách sản phẩm</Typography.Title>
         <Divider />
-
         <div
-          className="product-list-container phg-product-list"
+          className="product-list-container"
           style={{
             overflowX: "auto",
             overflowY: "visible",
@@ -93,11 +92,7 @@ const DanhSachSanPham = ({
             {(fields, { add, remove }) => (
               <>
                 {/* Header: tổng span = 24 */}
-                <Row
-                  gutter={[8, 8]}
-                  className="product-row product-header"
-                  style={{ marginBottom: 16 }}
-                >
+                <Row gutter={[8, 8]} className="product-row" style={{ marginBottom: 16 }}>
                   <Col span={7}>
                     <Typography.Text strong>Tên SP/NVL</Typography.Text>
                   </Col>
@@ -136,7 +131,7 @@ const DanhSachSanPham = ({
 <Col span={7}>
   <SelectFormApi
     name={[name, "san_pham_id"]}
-    label="Tên SP/NVL"
+ 
     rules={[{ required: true, message: "Vui lòng chọn sản phẩm!" }]}
     path={`${API_ROUTE_CONFIG.SAN_PHAM}/options`}
     placeholder="Chọn sản phẩm"
@@ -146,11 +141,12 @@ const DanhSachSanPham = ({
   />
 </Col>
 
-{/* ĐƠN VỊ TÍNH (3) */}
+
+                    {/* ĐƠN VỊ TÍNH (3) */}
 <Col span={3}>
   <SelectFormApi
     name={[name, "don_vi_tinh_id"]}
-    label="Đơn vị tính"
+   
     rules={[{ required: true, message: "Vui lòng chọn đơn vị tính!" }]}
     path={
       sanPhamId
@@ -186,7 +182,6 @@ const DanhSachSanPham = ({
                         <Form.Item
                           {...restField}
                           name={[name, "loai_gia"]}
-                          label="Loại giá"
                           rules={[
                             { required: true, message: "Vui lòng chọn loại giá!" },
                           ]}
@@ -203,9 +198,6 @@ const DanhSachSanPham = ({
                                 value
                               );
                             }}
-                            // ⬇️ Dropdown mượt trong modal
-
-                            showSearch
                           />
                         </Form.Item>
                       </Col>
@@ -215,7 +207,6 @@ const DanhSachSanPham = ({
                         <Form.Item
                           {...restField}
                           name={[name, "don_gia"]}
-                          label="Giá bán"
                           rules={[
                             { required: true, message: "Vui lòng nhập giá bán!" },
                           ]}
@@ -228,7 +219,6 @@ const DanhSachSanPham = ({
                             parser={parser}
                             addonAfter="đ"
                             disabled // giá auto-fill từ BE
-                            inputMode="numeric"
                           />
                         </Form.Item>
                       </Col>
@@ -238,7 +228,6 @@ const DanhSachSanPham = ({
                         <Form.Item
                           {...restField}
                           name={[name, "so_luong"]}
-                          label="Số lượng"
                           rules={[
                             { required: true, message: "Vui lòng nhập số lượng!" },
                           ]}
@@ -248,7 +237,6 @@ const DanhSachSanPham = ({
                             placeholder="Số lượng"
                             style={{ width: "100%" }}
                             disabled={isDetail}
-                            inputMode="numeric"
                           />
                         </Form.Item>
                       </Col>
@@ -258,10 +246,9 @@ const DanhSachSanPham = ({
                         <Form.Item
                           {...restField}
                           name={[name, "tong_tien"]}
-                          label="Tổng tiền"
                           dependencies={[
                             [name, "so_luong"],
-                            [name, "don_gia"], // 👉 nghe theo don_gia
+                            [name, "don_gia"], // 👉 đổi sang don_gia
                             [name, "chiet_khau"],
                           ]}
                         >
@@ -272,22 +259,19 @@ const DanhSachSanPham = ({
                             parser={parser}
                             disabled
                             addonAfter="đ"
-                            inputMode="numeric"
                           />
                         </Form.Item>
                       </Col>
 
                       {/* XOÁ (2) */}
                       <Col span={2}>
-                        <Form.Item label=" " colon={false}>
-                          <Button
-                            type="text"
-                            danger
-                            icon={<MinusCircleOutlined />}
-                            onClick={() => remove(name)}
-                            disabled={isDetail}
-                          />
-                        </Form.Item>
+                        <Button
+                          type="text"
+                          danger
+                          icon={<MinusCircleOutlined />}
+                          onClick={() => remove(name)}
+                          disabled={isDetail}
+                        />
                       </Col>
                     </Row>
                   );
@@ -317,4 +301,3 @@ const DanhSachSanPham = ({
 };
 
 export default DanhSachSanPham;
-
