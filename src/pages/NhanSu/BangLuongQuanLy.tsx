@@ -304,21 +304,33 @@ const exportPayroll = (format: "csv" | "html" | "pdf", userId: number) => {
     setUpdOpen(true);
   };
 
-  const submitUpdate = async () => {
-    const v = await updForm.validateFields();
-    try {
-      await axios.patch(API_ROUTE_CONFIG.NHAN_SU_BANG_LUONG_UPDATE_MANUAL, {
-        id: detail?.id,
-        ...v,
-      });
-      setUpdOpen(false);
-      Toast.show({ content: "Đã cập nhật", position: "bottom" });
-      fetchList();
-      if (detail?.user_id) onShowDetail(detail.user_id);
-    } catch (e: any) {
-      Toast.show({ content: e?.message || "Lỗi cập nhật", position: "bottom" });
+// NHẬN values trực tiếp từ Form.onFinish
+const submitUpdate = async (v: any) => {
+  if (!detail?.id) {
+    Toast.show({ content: "Thiếu ID dòng lương cần cập nhật", position: "bottom" });
+    return;
+  }
+
+  try {
+    await axios.patch(API_ROUTE_CONFIG.NHAN_SU_BANG_LUONG_UPDATE_MANUAL, {
+      id: detail.id,
+      ...v,
+    });
+
+    setUpdOpen(false);
+    Toast.show({ content: "Đã cập nhật", position: "bottom" });
+
+    // load lại danh sách & chi tiết
+    await fetchList();
+    if (detail.user_id) {
+      onShowDetail(detail.user_id);
     }
-  };
+  } catch (e: any) {
+    console.error("[BangLuongQuanLy] update-manual error =", e?.response?.data || e);
+    Toast.show({ content: e?.message || "Lỗi cập nhật", position: "bottom" });
+  }
+};
+
 
   const totalThucNhan = useMemo(
     () => items.reduce((s, x) => s + (x.thuc_nhan || 0), 0),
@@ -574,67 +586,69 @@ const exportPayroll = (format: "csv" | "html" | "pdf", userId: number) => {
       />
 
       {/* Modal: Update thủ công */}
-      <Modal
-        visible={updOpen}
-        onClose={() => setUpdOpen(false)}
-        content={
-          <div>
-            <div className="text-[14px] font-semibold mb-2">Cập nhật thủ công</div>
-            <Form
-              form={updForm}
-              layout="horizontal"
-              footer={
-                <Space style={{ width: "100%", justifyContent: "flex-end" }}>
-                  <Button onClick={() => setUpdOpen(false)}>Hủy</Button>
-                  <Button color="primary" onClick={submitUpdate}>
-                    Lưu
-                  </Button>
-                </Space>
-              }
-            >
-              {/* SỬA RULE: message tiếng Việt, tránh mặc định tiếng Trung */}
-              <Form.Item
-                name="phu_cap"
-                label="Phụ cấp"
-                rules={[{ required: true, message: "Vui lòng nhập Phụ cấp" }]}
-              >
-                <Input type="number" inputMode="numeric" placeholder="0" />
-              </Form.Item>
-              <Form.Item
-                name="thuong"
-                label="Thưởng"
-                rules={[{ required: true, message: "Vui lòng nhập Thưởng" }]}
-              >
-                <Input type="number" inputMode="numeric" placeholder="0" />
-              </Form.Item>
-              <Form.Item
-                name="phat"
-                label="Phạt"
-                rules={[{ required: true, message: "Vui lòng nhập Phạt" }]}
-              >
-                <Input type="number" inputMode="numeric" placeholder="0" />
-              </Form.Item>
-              <Form.Item
-                name="tam_ung"
-                label="Tạm ứng"
-                rules={[{ required: true, message: "Vui lòng nhập Tạm ứng" }]}
-              >
-                <Input type="number" inputMode="numeric" placeholder="0" />
-              </Form.Item>
-              <Form.Item
-                name="khau_tru_khac"
-                label="Khấu trừ khác"
-                rules={[{ required: true, message: "Vui lòng nhập Khấu trừ khác" }]}
-              >
-                <Input type="number" inputMode="numeric" placeholder="0" />
-              </Form.Item>
-              <Form.Item name="ghi_chu" label="Ghi chú">
-                <Input placeholder="Ghi chú nội bộ…" />
-              </Form.Item>
-            </Form>
-          </div>
+<Modal
+  visible={updOpen}
+  onClose={() => setUpdOpen(false)}
+  content={
+    <div>
+      <div className="text-[14px] font-semibold mb-2">Cập nhật thủ công</div>
+      <Form
+        form={updForm}
+        layout="horizontal"
+        onFinish={submitUpdate}   // ✅ Form sẽ gọi submitUpdate(values)
+        footer={
+          <Space style={{ width: "100%", justifyContent: "flex-end" }}>
+            <Button onClick={() => setUpdOpen(false)}>Hủy</Button>
+            {/* type="submit" để kích hoạt onFinish + validate */}
+            <Button color="primary" type="submit">
+              Lưu
+            </Button>
+          </Space>
         }
-      />
+      >
+        <Form.Item
+          name="phu_cap"
+          label="Phụ cấp"
+          rules={[{ required: true, message: "Vui lòng nhập Phụ cấp" }]}
+        >
+          <Input type="number" inputMode="numeric" placeholder="0" />
+        </Form.Item>
+        <Form.Item
+          name="thuong"
+          label="Thưởng"
+          rules={[{ required: true, message: "Vui lòng nhập Thưởng" }]}
+        >
+          <Input type="number" inputMode="numeric" placeholder="0" />
+        </Form.Item>
+        <Form.Item
+          name="phat"
+          label="Phạt"
+          rules={[{ required: true, message: "Vui lòng nhập Phạt" }]}
+        >
+          <Input type="number" inputMode="numeric" placeholder="0" />
+        </Form.Item>
+        <Form.Item
+          name="tam_ung"
+          label="Tạm ứng"
+          rules={[{ required: true, message: "Vui lòng nhập Tạm ứng" }]}
+        >
+          <Input type="number" inputMode="numeric" placeholder="0" />
+        </Form.Item>
+        <Form.Item
+          name="khau_tru_khac"
+          label="Khấu trừ khác"
+          rules={[{ required: true, message: "Vui lòng nhập Khấu trừ khác" }]}
+        >
+          <Input type="number" inputMode="numeric" placeholder="0" />
+        </Form.Item>
+        <Form.Item name="ghi_chu" label="Ghi chú">
+          <Input placeholder="Ghi chú nội bộ…" />
+        </Form.Item>
+      </Form>
+    </div>
+  }
+/>
+
     </div>
   );
 }

@@ -34,7 +34,6 @@ const EXTRA_WHITELIST = [
 
 
 
-
 ];
 
 /**
